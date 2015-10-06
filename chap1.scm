@@ -103,3 +103,11 @@
         ((= n 1) (list 1))  ; First row
         ; All other rows begin with 1 and then are sum_aboves all the way down
         (else (cons 1 (helper (pascal (- n 1)))))))
+
+; 1.16
+(define (fast-expt b n)
+  (define (helper a b n)
+    (cond ((= n 0) a)
+          ((even? n) (helper a (square b) (/ n 2)))
+          (else (helper (* a b) b (- n 1)))))
+  (helper 1 b n))
