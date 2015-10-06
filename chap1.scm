@@ -111,3 +111,26 @@
           ((even? n) (helper a (square b) (/ n 2)))
           (else (helper (* a b) b (- n 1)))))
   (helper 1 b n))
+
+; 1.17
+; Define multiplication via addition, double and half
+; in the same "fast" way as the expt example ^
+; i.e. 4 * 4 = 8 * 2 = 16 * 1
+;      4 * 5 = 4 + (4 * 4) = 4 + (8 * 2) ...etc
+(define (fast-mult x y)
+  (define (double x) (+ x x))
+  (define (halve x) (/ x 2))
+  (cond ((= y 0) 0)
+        ((even? y) (fast-mult (double x) (halve y)))
+        (else (+ x (fast-mult x (- y 1))))))
+
+; 1.18
+; Iterative version of above
+(define (fast-mult-i x y)
+  (define (double x) (+ x x))
+  (define (halve x) (/ x 2))
+  (define (iter a x y)
+    (cond ((= y 0) a)
+          ((even? y) (iter a (double x) (halve y)))
+          (else (iter (+ a x) x (- y 1)))))
+  (iter 0 x y))
