@@ -46,3 +46,60 @@
 ;> 3.00009155413138
 (mysqrt 9)
 ;> 3.000000001396984
+
+; Ackerman
+(define (Ackerman)
+  (define (A x y)
+    (cond ((= y 0) 0)
+          ((= x 0) (* 2 y))
+          ((= y 1) 2)
+          (else (A (- x 1)
+                   (A x (- y 1))))))
+  (define (f n) (A 0 n)) ; x is 0, call 2*y so |f = 2n|
+  (define (g n) (A 1 n)) ; x is 1, recursively call the 2*y path so |f = 2^n|
+  (define (h n) (A 2 n)) ; x is 2, this one's nasty:
+                         ; n=1 -> 2                     2^1
+                         ; n=2 -> 4     2*2             2^2
+                         ; n=3 -> 16    2*2*2*2         2^4
+                         ; n=4 -> 65536 2*2*2*2....*2   2^16
+                         ; n=5 can't be computer, presumably because it's 2^65536
+                         ; So, basically, h n = 2^(h(n-1))
+                         ; Fibonacci on steroids :)
+  (define (k n) (* 5 n n)))
+
+; Ex 1.11
+; fn3 = f(n) = n if n < 3
+; fn3 = f(n) = f(n-1) + 2f(n-2) + 3f(n-3)
+; Recursive def:
+(define (fn3r x)
+  (if (< x 3)
+    x
+    (+ (fn3r (- x 1))
+       (* 2 (fn3r (- x 2)))
+       (* 3 (fn3r (- x 3))))))
+
+; Iterative def:
+(define (fn3i x)
+  (define (f n-3 n-2 n-1 n)
+    (if (= n 0)
+      n-3
+      (f n-2 n-1 (+ n-1 (* 2 n-2) (* 3 n-3)) (- n 1))))
+  (f 0 1 2 x))
+
+; Ex 1.12
+; Pascal's triangle
+(define (pascal n)
+  (define (sum_above l)
+    ; Sum the first two numbers of the supplied list
+    ; to generate the appropriate next Pascal number
+    (+ (car l) (cadr l)))
+  (define (helper l)
+    ; Recurse over the supplied list and generate a new list based on the
+    ; sum-of-two's, or just '1' if there's only one number to work with
+    (cond ((eq? (cdr l) ()) (list 1))
+          (else (cons (sum_above l) (helper (cdr l))))))
+  ; The generate-the-triangle bit
+  (cond ((= n 0) ())        ; Could just assume >0 always, but meh
+        ((= n 1) (list 1))  ; First row
+        ; All other rows begin with 1 and then are sum_aboves all the way down
+        (else (cons 1 (helper (pascal (- n 1)))))))
