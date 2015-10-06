@@ -134,3 +134,13 @@
           ((even? y) (iter a (double x) (halve y)))
           (else (iter (+ a x) x (- y 1)))))
   (iter 0 x y))
+
+; 1.20
+; gcd 206 40
+; Normal order:
+; (if (= 40 0)...
+; gcd 40 (r 206 40)
+; (if (= (r 206 40) 0) -> (if (= 6 0)...
+; gcd (r 206 40) (r 40 (r 206 40))
+; And so on until the r evaluates to 0
+; So many evals!
