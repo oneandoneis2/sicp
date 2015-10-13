@@ -144,3 +144,52 @@
 ; gcd (r 206 40) (r 40 (r 206 40))
 ; And so on until the r evaluates to 0
 ; So many evals!
+
+; 1.21
+(define (smallest-divisor n)
+  (find-divisor n 2))
+(define (find-divisor n test-divisor)
+  (cond ((> (square test-divisor) n) n)
+        ((divides? test-divisor n) test-divisor)
+        (else (find-divisor n (+ test-divisor 1)))))
+(define (divides? a b)
+  (= (remainder b a) 0))
+; 199 -> 199
+; 1999 -> 1999
+; 1999 -> 7
+;
+; 1.22 ->
+; CBA, it's just a load of fucking maths
+
+(define (id n) n)
+(define (inc n) (+ n 1))
+(define (cube n) (* n n n))
+; 1.30
+(define (sum-cubes a b)
+  (define (sum term a next b)
+    (if (> a b)
+      0
+      (+ (term a)
+         (sum term (next a) next b))))
+  (sum cube a inc b))
+
+; Now for the iterative alternative
+(define (sum-cubes-it a b)
+  (define (sum-it term a next b)
+    (define (iter a result)
+      (if (> a b)
+        result
+        (iter (next a) (+ (term a) result))))
+    (iter a 0))
+  (sum-it cube a inc b))
+
+; 1.31
+(define (product term a next b)
+  (if (> a b)
+    1
+    (* (term a)
+       (product term (next a) next b))))
+(define (factorial n)
+  (product id 1 inc n))
+; The iterative solution is utterly obvious so not bothering
+; If you've encountered "fold" before, the whole iterative thing is old hat anyway
