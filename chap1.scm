@@ -193,3 +193,28 @@
   (product id 1 inc n))
 ; The iterative solution is utterly obvious so not bothering
 ; If you've encountered "fold" before, the whole iterative thing is old hat anyway
+; 1.32
+(define (accumulate combiner null-value term a next b)
+  (define (iter a result)
+    (if (> a b)
+      result
+      (iter (next a) (combiner (term a) result))))
+  (iter a null-value))
+(define (asum term a next b)
+  (accumulate + 0 term a next b))
+; 1.33
+(define (filtered-accumulate filtr combiner null-value term a next b)
+  (define (filtered a)
+    ; Abstract out correct filter behaviour: Either return (term a)
+    ; or the null value to make it a noop
+    (define ta (term a))
+    (if (filtr ta)
+      ta
+      null-value))
+  (define (iter a result)
+    (if (> a b)
+      result
+      (iter (next a) (combiner (filtered a) result))))
+  (iter a null-value))
+(define (fsum-odd a b)  ; Add all odd numbers in a range
+  (filtered-accumulate odd? + 0 id a inc b))
