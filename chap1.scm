@@ -218,3 +218,11 @@
   (iter a null-value))
 (define (fsum-odd a b)  ; Add all odd numbers in a range
   (filtered-accumulate odd? + 0 id a inc b))
+
+; Just for the hell of it - foldl
+(define (fold acc bin li)
+  (define (iter acc lst)
+    (if (null? lst)
+    acc
+    (iter (bin acc (car lst)) (cdr lst))))
+  (iter acc li))
