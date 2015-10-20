@@ -226,3 +226,35 @@
     acc
     (iter (bin acc (car lst)) (cdr lst))))
   (iter acc li))
+
+; 1.41 - double-call
+(define (double f)
+  (lambda (x)
+    (f (f x))))
+; (((double (double double)) inc) 5)
+;> 21 because (double double) applies a function 4 times, so when passed itself, (f (f x)) = 4x4
+
+; 1.42 - composition, or "wordy dot notation" :)
+(define (compose a b)
+  (lambda (x)
+    (a (b x))))
+
+; 1.43
+(define (repeated f x)
+  (if (eq? x 1) ; It grates to use 1 instead of 0 as the end condition, but..
+    f
+    (compose f (repeated f (- x 1)))))
+
+; 1.44
+(define (avg3 a b c)
+  (/ (+ a b c) 3))
+(define dx 0.00001)
+(define (smooth f)
+  (lambda (x)
+    (avg3
+      (f (- x dx))
+      (f x)
+      (f (+ x dx)))))
+
+(define (n-smooth f n)
+  ((repeated smooth n) f))
