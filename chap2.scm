@@ -20,14 +20,17 @@
   (= (* (numer x) (denom y))
      (* (numer y) (denom x))))
 
-; Goes against the grain to not just do (define make-rat cons)
-; especially after reading the Little Schemer, which does,
-; but I accept their argument of it being better for debugging
-; Plus changing it to do GCD is easier this way...
+; 2.1
 (define (make-rat n d)
-  (let ((g (gcd n d)))
+  (let ((g ((if (< d 0) - +) (abs (gcd n d)))))
+    ; ^ Because both numbers get divided by gcd, a mechanism that
+    ; sets gcd to -ve only if d is -ve will always DTRT:
+    ; g will flip the sign of both if d is -ve
     (cons (/ n g) (/ d g))))
 
+; Goes against the grain to not just do (define numer car)
+; especially after reading the Little Schemer
+; but I accept their argument of it being better for debugging
 (define (numer x)
   (car x))
 
