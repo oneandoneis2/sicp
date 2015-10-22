@@ -23,8 +23,10 @@
 ; Goes against the grain to not just do (define make-rat cons)
 ; especially after reading the Little Schemer, which does,
 ; but I accept their argument of it being better for debugging
-(define (make-rat x y)
-  (cons x y))
+; Plus changing it to do GCD is easier this way...
+(define (make-rat n d)
+  (let ((g (gcd n d)))
+    (cons (/ n g) (/ d g))))
 
 (define (numer x)
   (car x))
@@ -36,4 +38,10 @@
   (newline)
   (display (numer x))
   (display "/")
-  (display (denom x)))
+  (display (denom x))
+  x) ; It's annoying to be undef and vaguely useful to see the real data
+
+(define (gcd a b)
+  (if (= b 0)
+    a
+    (gcd b (remainder a b))))
