@@ -109,3 +109,25 @@
     (display (perimiter test))
     (display ", area: ")
     (display (area test))))
+
+; Now, imp.2
+(define (imp2 p w h)
+  ; First, the functions that must work for both implementations
+  (define (perimiter r) (+ (* 2 (height r)) (* 2 (width r))))
+  (define (area r) (* (height r) (width r)))
+  ; Define a rectangle as its bottom-left point & its dimensions
+  (define (make-rectangle p w h)
+    (cons p (cons w h)))
+  (define (dimensions r)
+    (cdr r))
+  (define (height r)
+    (cdr (dimensions r)))
+  (define (width r)
+    (car (dimensions r)))
+  ; Right, that's everything defined. Try it out
+  (let ((test (make-rectangle p w h)))
+    (newline)
+    (display "Perimiter: ")
+    (display (perimiter test))
+    (display ", area: ")
+    (display (area test))))
