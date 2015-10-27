@@ -82,3 +82,30 @@
   (display ",")
   (display (y-point p))
   (display ")"))
+
+; 2.3
+; Now, imp.1
+(define (imp1 a b)
+  ; First, the functions that must work for both implementations
+  (define (perimiter r) (+ (* 2 (height r)) (* 2 (width r))))
+  (define (area r) (* (height r) (width r)))
+  ; Define a rectangle as two points: The bottom left, and the top right
+  (define (make-rectangle bl tr)
+    (cons bl tr))
+  (define (bottom-left r)
+    (car r))
+  (define (top-right r)
+    (cdr r))
+  (define (point-diff f r)
+    (- (f (top-right r)) (f (bottom-left r))))
+  (define (height r)
+    (point-diff y-point r))
+  (define (width r)
+    (point-diff x-point r))
+  ; Right, that's everything defined. Try it out
+  (let ((test (make-rectangle a b)))
+    (newline)
+    (display "Perimiter: ")
+    (display (perimiter test))
+    (display ", area: ")
+    (display (area test))))
