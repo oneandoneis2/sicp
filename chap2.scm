@@ -131,3 +131,39 @@
     (display (perimiter test))
     (display ", area: ")
     (display (area test))))
+
+; 2.4
+(define (mycons x y)
+  (lambda (m) (m x y)))
+(define (mycar c)
+  (c (lambda (x y) x)))
+(define (mycdr c)
+  (c (lambda (x y) y)))
+
+; 2.5
+; The two numbers are represented by a single number, the product of 2^car * 3^cons
+; To retrieve car, we need to find a power of 2 that divides cons to give a power of 3
+;   i.e. if cons/2^n = 3^something then car cons = n
+; To retrive cdr, the same but swap the 2 and 3
+(define (cons25 a b)
+  (* (expt 2 a) (expt 3 b)))
+
+(define (ispow_n? base n)
+  (define (iter x)
+    (let ((e (expt base x)))
+      (cond ((= e n) #t)
+            ((> e n) #f)
+            (else (iter (+ 1 x))))))
+  (iter 0))
+(define (ispow2? n) (ispow_n? 2 n))
+(define (ispow3? n) (ispow_n? 3 n))
+
+(define (calc c num_wanted f_unwanted)
+  (define (iter x)
+    (let ((e (expt num_wanted x)))
+      (if (f_unwanted (/ c e))
+        x
+        (iter (+ 1 x)))))
+  (iter 0))
+(define (car25 c) (calc c 2 ispow3?))
+(define (cdr25 c) (calc c 3 ispow2?))
