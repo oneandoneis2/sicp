@@ -69,8 +69,9 @@
   (cdr p))
 
 (define (midpoint-segment s)
-  (make-segment (/ (+ (x-point (start-segment s)) (x-point (end-segment s))) 2)
-                (/ (+ (y-point (start-segment s)) (y-point (end-segment s))) 2)))
+  (define (average x y) (/ (+ x y) 2))
+  (make-segment (average (x-point (start-segment s)) (x-point (end-segment s)))
+                (average (y-point (start-segment s)) (y-point (end-segment s)))))
 
 (define (print-point p)
   (newline)
