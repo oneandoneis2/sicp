@@ -216,3 +216,11 @@
 ((five incf) 0)
 ;> 5
 ; What we basically do is apply one CN to x, and then apply the other to its result
+;
+; As an aside, we can define an iszero? function simply and usefully:
+; Just define a function that always returns false, and an argument of true
+; Because zero ignores the function and returns the argument, it returns true
+; Every other number applies the function, so will return false
+(define (iszero? n)
+  (define (return_f x) #f)
+  ((n return_f) #t))
