@@ -167,3 +167,52 @@
   (iter 0))
 (define (car25 c) (calc c 2 ispow3?))
 (define (cdr25 c) (calc c 3 ispow2?))
+
+; 2.6
+; Church numerals
+; CN's basically deal with two arguments: a function and a value
+; For the numeral n, the function is applied n times, so:
+; 0 f x = x
+; 1 f x = f(x)
+; 2 f x = f( f(x) )
+; etc.
+(define zero (lambda (f) (lambda (x) x)))
+(define (add-1 n) (lambda (f) (lambda (x) (f ((n f) x)))))
+; So to define one and two directly, just sub the appropriate values
+; one = (add-1 zero)
+; one = (lambda (f) (lambda (x) (f ((zero f) x))))
+; Zero ignores the f and just returns the identity of the x, so:
+; one = (lambda (f) (lambda (x) (f x)))
+; And so two is just:
+; two = (add-1 one)
+; two = (lambda (f) (lambda (x) (f ((one f) x))))
+; one applies f to x once, thus:
+; two = (lambda (f) (lambda (x) (f (f x))))
+(define one (lambda (f) (lambda (x) (f x))))
+(define two (lambda (f) (lambda (x) (f (f x)))))
+; For simple testing purposes
+(define (incf x) (+ 1 x))
+; Aaand:
+((one incf) 0)
+;> 1
+((two incf) 0)
+;> 2
+; CN's basically consider the numeral n to mean "apply the function f n times"
+; So three doesn''t mean three, it means "do something three times"
+; So a simple way of doing addition would be to make add-1 the function
+; So we could define three as:
+(define three ((one add-1) two))
+((three incf) 0)
+;> 3
+; And that *does* work, and it's not defining addition in terms of (direct)
+; repeated addition of 1 ; But it *does* still use add-1 repeatedly
+; So it's not entirely kosher as a solution to the addition
+; We're meant to be making a function that'll not need repeated iteration..
+(define (cn-add i j)
+  (lambda (f)
+    (lambda (x)
+      ((j f) ((i f) x)))))
+(define five (cn-add two three))
+((five incf) 0)
+;> 5
+; What we basically do is apply one CN to x, and then apply the other to its result
