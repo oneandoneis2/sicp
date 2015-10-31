@@ -224,3 +224,82 @@
 (define (iszero? n)
   (define (return_f x) #f)
   ((n return_f) #t))
+
+(define (add-interval x y)
+  (make-interval (+ (lower-bound x) (lower-bound y))
+                 (+ (upper-bound x) (upper-bound y))))
+
+; Was confused by a while why we needed to do all four multiplications
+; but if you have -ve numbers, then all becomes clear!
+(define (mul-interval x y)
+  (let ((p1 (* (lower-bound x) (lower-bound y)))
+        (p2 (* (lower-bound x) (upper-bound y)))
+        (p3 (* (upper-bound x) (lower-bound y)))
+        (p4 (* (upper-bound x) (upper-bound y))))
+    (make-interval (min p1 p2 p3 p4)
+                   (max p1 p2 p3 p4))))
+
+; 2.7
+(define (make-interval a b)
+  (cons a b))
+
+; The assumption throughout when making an interval has been that it's
+; (lower . upper) but we may as well enforce it and not have to rely
+; on ordering... TBH anything else makes the exercise seem pointless
+(define (upper-bound i)
+  (max (car i) (cdr i)))
+(define (lower-bound i)
+  (min (car i) (cdr i)))
+
+; 2.8
+; The basic logic here is [a,b]-[c,d] = [a-d,b-c] - so sayeth Wikipedia
+(define (sub-interval a b)
+  (make-interval (- (lower-bound a) (upper-bound b))
+                 (- (upper-bound a) (lower-bound b))))
+
+; 2.9 is just maths. No.
+; 2.10
+; Handle interval equivalent of divide-by-zero:
+; Divinding by an interval of (1-,1) or (0,1) is not defined
+(define (div-interval x y)
+  (let ((up (upper-bound y))
+        (lo (lower-bound y)))
+    (if (>= 0 (* up lo))  ; A zero or -ve result must mean spanning zero
+      (error "Division error: Interval spans zero")
+      (mul-interval x
+                    (make-interval (/ 1.0 up)
+                                   (/ 1.0 lo))))))
+
+; 2.11's rewrite is worse in every possible way. No.
+; The nine cases are the 3x3 of both-positive, both-negative, and spans-zero
+
+(define (make-center-width c w)
+  (make-interval (- c w) (+ c w)))
+
+(define (center i)
+  (/ (+ (lower-bound i) (upper-bound i)) 2))
+
+(define (width i)
+  (/ (- (upper-bound i) (lower-bound i)) 2))
+; 2.12
+(define (make-center-percent c p)
+  (let ((w (* (/ p 100) c)))
+    (make-center-width c w))) ; Since we calc'd the width, might as well just recycle
+
+(define (percent-interval i)
+  ; Find %age using formula: 100 * (difference in values)/(sum of values)
+  ; Since width and center are already defined, and both generate 1/2 the val we want
+  ; we can just use them
+  ( * 100 (/ (width i) (center i))))
+
+; 2.13 -> 2.16 = pure maths. Not interested.
+; Problem is that we don't handle "identity"
+; e.g. A = (1 . 4), B = (1 . 4)
+; Both A and B could be any number between 1 and 4
+; A/B = (0.25, 4) - that's as precise as we can be
+; A/A *should* = 1
+;   (or (1 . 1) to keep it as an interval)
+;   but instead will be considered equal to A/B
+; So any time we use the same interval more than once, issues could arise
+; Hence par2 is a better solution than par1. We'd need a reliable concept of identity
+; to fix these issues. If we had one, then par1 and par2 would be equivalent.
