@@ -303,3 +303,20 @@
 ; So any time we use the same interval more than once, issues could arise
 ; Hence par2 is a better solution than par1. We'd need a reliable concept of identity
 ; to fix these issues. If we had one, then par1 and par2 would be equivalent.
+
+; 2.17
+(define nil (list)) ; Why fight it?
+(define (last-pair l)
+  (define (iter last lst)
+    (if (null? lst)
+      (cons last lst)
+      (iter (car lst) (cdr lst))))
+  (iter nil l))
+
+; 2.18
+(define (my-reverse l)
+  (define (iter acc lst)
+    (if (null? lst)
+      acc
+      (iter (cons (car lst) acc) (cdr lst))))
+  (iter nil l))
