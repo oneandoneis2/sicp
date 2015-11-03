@@ -371,3 +371,58 @@
 (define (foreach f l)
   (map f l)
   #t)
+
+(define (count-leaves x)
+  (cond ((null? x) 0)
+        ((not (pair? x)) 1)
+        (else (+ (count-leaves (car x))
+                 (count-leaves (cdr x))))))
+
+; 2.24
+(count-leaves (list 1 (list 2 (list 3 4))))
+;> 4
+;
+; [1][ ]
+;     |
+;     v
+;    [ ][nil]
+;     |
+;     v
+;    [2][ ]
+;        |
+;        v
+;       [ ][()]
+;        |
+;        v
+;       [3][ ]
+;           |
+;           v
+;          [4][nil]
+;
+; (1 (2 (3 4)))
+;      ^
+;     / \
+;    1   (2 (3 4))
+;            ^
+;           / \
+;          2   (3 4)
+;                ^
+;               / \
+;              3   4
+
+; 2.25
+(car (cdr (car (cdr (cdr '(1 2 (' 5 7) 9))))))
+(car (car '((7))))
+(car (cdr (car (cdr (car (cdr (car (cdr (car (cdr (car (cdr '(1 (2 (3 (4 (5 (6 7))))))))))))))))))
+; ^ ouch!
+
+; 2.26
+(define x (list 1 2 3))
+(define y (list 4 5 6))
+(append x y)
+;> (1 2 3 4 5 6)
+(cons x y)
+;> ((1 2 3) 4 5 6)
+(list x y)
+;> ((1 2 3) (4 5 6))
+
