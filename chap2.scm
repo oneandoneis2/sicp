@@ -348,3 +348,26 @@
 ; (return-all 1 2 3 4 5)
 ;> (1 2 3 4 5)
 ; ^ Basically just defined cdr and list via lambda notation...
+
+; 2.21
+(define (square-list items)
+  (if (null? items)
+    nil
+    (cons (square (car items))
+          (square-list (cdr items)))))
+
+(define (square-list items)
+  (map square items))
+
+; 2.22
+; 1) Because you're consing answers onto the () at the end of the list,
+; so as you go along the initial list, each new answer becomes the car.
+; (This is how the reverse function I wrote earlier worked)
+; 2) Wha? Who would think this will work? You're consing numbers as cdr onto
+; an empty list as car - This is just wrong.
+
+; 2.23
+; Well.. it meets all the requirements..
+(define (foreach f l)
+  (map f l)
+  #t)
