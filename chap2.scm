@@ -320,3 +320,31 @@
       acc
       (iter (cons (car lst) acc) (cdr lst))))
   (iter nil l))
+
+; 2.19
+; I admit, with all the buildup I thought this would be more complicated...
+(define (first-denomination cv)
+  (car cv))
+(define (except-first-denomination cv)
+  (cdr cv))
+(define (no-more? cv)
+  (null? cv))
+
+; 2.20
+(define (same-parity first . rest)
+  (define (filtr lst f)
+    (cond ((null? lst) nil)
+          ((f (car lst)) (cons (car lst) (filtr (cdr lst) f)))
+          (else (filtr (cdr lst) f))))
+  (if (odd? first)
+    (cons first (filtr (cdr rest) odd?))
+    (cons first (filtr (cdr rest) even?))))
+
+; Note. To define a lambda using dot notation, use:
+(define return-tail (lambda (x . y) y))
+; (return-tail 1 2 3 4 5)
+;> (2 3 4 5)
+(define return-all (lambda w w))
+; (return-all 1 2 3 4 5)
+;> (1 2 3 4 5)
+; ^ Basically just defined cdr and list via lambda notation...
