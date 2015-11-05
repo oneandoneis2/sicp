@@ -435,3 +435,14 @@
   (iter nil l))
 ; ^ To my genuine amazement, that worked on my first try. No errors or re-jigging!
 ; What is SICP doing to my brain? O_o
+
+; 2.28
+(define (fringe l)
+  (define (iter acc lst)
+    (cond ((null? lst) acc)
+          ((pair? (car lst)) (iter (iter acc (car lst)) (cdr lst)))
+          (else (iter (cons (car lst) acc) (cdr lst)))))
+  (reverse (iter nil l)))
+; This would have taken two tries, but took a dozen because of one silly mistake
+; Note to self: Make sure you return the accumulator, not nil, when the list is empty
+; Sigh.
