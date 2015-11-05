@@ -520,3 +520,44 @@
 ; Redefine to use cons instead of list
 ; Check the git diff to verify that I did, indeed, start out with lists
 ; and the changes weren't all that big. Go me!
+
+(define my-tree '(1 (2 (3 4) 5) (6 7)))
+
+(define (scale-tree tree factor)
+  (cond ((null? tree) nil)
+        ((not (pair? tree)) (* tree factor))
+        (else (cons (scale-tree (car tree) factor)
+                    (scale-tree (cdr tree) factor)))))
+
+(define (scale-tree tree factor)
+  (map (lambda (sub-tree)
+         (if (pair? sub-tree)
+           (scale-tree sub-tree factor)
+           (* sub-tree factor)))
+       tree))
+
+; 2.30
+; First, just refactor scale-tree
+(define (square-tree1 tree)
+  (cond ((null? tree) nil)
+        ((not (pair? tree)) (* tree tree))
+        (else (cons (square-tree1 (car tree))
+                    (square-tree1 (cdr tree))))))
+
+; Second, refactor their map version
+(define (square-tree2 tree)
+  (map (lambda (sub-tree)
+         (if (pair? sub-tree)
+           (square-tree2 sub-tree)
+           (* sub-tree sub-tree)))
+       tree))
+
+; 2.31
+; map equivalent for trees
+(define (tree-map func tree)
+  (cond ((null? tree) nil)
+        ((not (pair? tree)) (func tree))
+        (else (cons (tree-map func (car tree))
+                    (tree-map func (cdr tree))))))
+
+(define (square-tree3 tree) (tree-map square tree))
