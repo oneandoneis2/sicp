@@ -449,3 +449,56 @@
 ; This would have taken two tries, but took a dozen because of one silly mistake
 ; Note to self: Make sure you return the accumulator, not nil, when the list is empty
 ; Sigh.
+; Also, it would be a lot easier if append were available, but I don't think we're
+; meant to know about it yet..?
+
+(define (make-mobile left right)
+  (list left right))
+(define (make-branch long struct)
+  (list long struct))
+
+; 2.29
+; Make life easy by defining a nested mobile
+(define my-mob
+  (make-mobile (make-branch 2 (make-mobile (make-branch 3 10)
+                                           (make-branch 5 (make-mobile (make-branch 4 6)
+                                                                       (make-branch 1 2)))))
+               (make-branch 4 (make-mobile (make-branch 2 5)
+                                           (make-branch 3 4)))))
+
+; a
+(define (left-branch m) (car m))
+(define (right-branch m) (car (cdr m)))
+
+;b
+; Some helper utils
+(define (get_length branch) (car branch))
+(define (get_struct branch) (car (cdr branch)))
+(define (is_mobile? struct) (pair? struct))
+
+; Mutual recursion seems the way to go..
+(define (branch-weight branch)
+  (define (iter b acc)
+    (let ((struct (get_struct b)))
+      ; The struct is either a simple number (just add) or a mobile (recurse)
+      (if (is_mobile? struct)
+        (total-weight struct)
+        (+ acc struct))))
+  (iter branch 0))
+
+(define (total-weight mob)
+  ; Any mobile is just the sum of its branches
+  (+ (branch-weight (left-branch mob))
+     (branch-weight (right-branch mob))))
+
+;c
+; Another helper
+(define (torque branch)
+  (* (get_length branch)
+     (branch-weight branch)))
+
+(define (balanced? mobile)
+  (let ((l_br (left-branch mobile))
+        (r_br (right-branch mobile)))
+    (= (torque l_br)
+       (torque r_br))))
