@@ -459,6 +459,19 @@
 
 ; 2.29
 ; Make life easy by defining a nested mobile
+;            my-mob
+;          /        \
+;        --          ----
+;        |              |
+;        o              o
+;       / \            / \
+;    ---   -----     --   ---
+;    |         |     |      |
+;   10         o     5      4
+;             / \
+;         ----   -
+;         |      |
+;         6      2
 (define my-mob
   (make-mobile (make-branch 2 (make-mobile (make-branch 3 10)
                                            (make-branch 5 (make-mobile (make-branch 4 6)
