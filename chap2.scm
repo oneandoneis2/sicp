@@ -453,9 +453,9 @@
 ; meant to know about it yet..?
 
 (define (make-mobile left right)
-  (list left right))
+  (cons left right))
 (define (make-branch long struct)
-  (list long struct))
+  (cons long struct))
 
 ; 2.29
 ; Make life easy by defining a nested mobile
@@ -468,12 +468,12 @@
 
 ; a
 (define (left-branch m) (car m))
-(define (right-branch m) (car (cdr m)))
+(define (right-branch m) (cdr m))
 
 ;b
 ; Some helper utils
 (define (get_length branch) (car branch))
-(define (get_struct branch) (car (cdr branch)))
+(define (get_struct branch) (cdr branch))
 (define (is_mobile? struct) (pair? struct))
 
 ; Mutual recursion seems the way to go..
@@ -502,3 +502,8 @@
         (r_br (right-branch mobile)))
     (= (torque l_br)
        (torque r_br))))
+
+;d
+; Redefine to use cons instead of list
+; Check the git diff to verify that I did, indeed, start out with lists
+; and the changes weren't all that big. Go me!
