@@ -561,3 +561,18 @@
                     (tree-map func (cdr tree))))))
 
 (define (square-tree3 tree) (tree-map square tree))
+
+; 2.32
+; More mathy than I'd like.
+; To solve, I used the following advice
+;   The set of all subsets of a given set is the union of:
+;     # the set of all subsets excluding the first number.
+;     # the set of all subsets excluding the first number,
+;       with the first number re-inserted into each subset.
+; This means that since 'rest' contains the first bullet point, we just cons the car
+; (which is the first number) onto each of its elements and append them together
+(define (subsets s)
+  (if (null? s)
+    (list nil)
+    (let ((rest (subsets (cdr s))))
+      (append rest (map (lambda (r) (cons (car s) r)) rest)))))
