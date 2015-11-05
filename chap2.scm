@@ -439,9 +439,12 @@
 ; 2.28
 (define (fringe l)
   (define (iter acc lst)
-    (cond ((null? lst) acc)
-          ((pair? (car lst)) (iter (iter acc (car lst)) (cdr lst)))
-          (else (iter (cons (car lst) acc) (cdr lst)))))
+    (if (null? lst)
+      acc
+      (let ((head (car lst)) (tail (cdr lst)))
+        (if (pair? head)
+          (iter (iter acc head) tail)
+          (iter (cons head acc) tail)))))
   (reverse (iter nil l)))
 ; This would have taken two tries, but took a dozen because of one silly mistake
 ; Note to self: Make sure you return the accumulator, not nil, when the list is empty
