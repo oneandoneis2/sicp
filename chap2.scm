@@ -426,3 +426,12 @@
 (list x y)
 ;> ((1 2 3) (4 5 6))
 
+; 2.27
+(define (deep-reverse l)
+  (define (iter acc lst)
+    (cond ((null? lst) acc)
+          ((pair? (car lst)) (iter (cons (iter nil (car lst)) acc) (cdr lst)))
+          (else (iter (cons (car lst) acc) (cdr lst)))))
+  (iter nil l))
+; ^ To my genuine amazement, that worked on my first try. No errors or re-jigging!
+; What is SICP doing to my brain? O_o
