@@ -576,3 +576,36 @@
     (list nil)
     (let ((rest (subsets (cdr s))))
       (append rest (map (lambda (r) (cons (car s) r)) rest)))))
+
+; 2.33
+(define (accumulate op initial sequence)
+  (if (null? sequence)
+    initial
+    (op (car sequence)
+        (accumulate op initial (cdr sequence)))))
+
+(define (accmap p sequence)
+  (accumulate (lambda (x y) (cons (p x) y)) nil sequence))
+
+(define (accappend seq1 seq2)
+  (accumulate cons seq2 seq1))
+
+(define (acclength sequence)
+  (accumulate (lambda (val acc) (+ 1 acc)) 0 sequence))
+
+; 2.34
+; Almost skipped as "too mathy", but..
+; Weird-arse way of solving the polynomial, I must say..
+(define (horner-eval x coefficient-sequence)
+  (accumulate (lambda (this-coeff higher-terms) (+ this-coeff (* x higher-terms)))
+              0
+              coefficient-sequence))
+
+; 2.35
+; This was hard work until I saw the "map" hint -
+; was expecting op to be the lambda that did all the work,
+; putting it into the seq instead is a nice touch
+(define (acc-count-leaves x)
+  (accumulate +
+              0
+              (map (lambda (node) (if (pair? node) (acc-count-leaves node) 1)) x)))
