@@ -609,3 +609,67 @@
   (accumulate +
               0
               (map (lambda (node) (if (pair? node) (acc-count-leaves node) 1)) x)))
+
+; 2.36
+; Simpler than you'd think
+(define (accumulate-n op init seqs)
+  (if (null? (car seqs))
+    nil
+    (cons (accumulate op init (map car seqs))
+          (accumulate-n op init (map cdr seqs)))))
+
+; 2.37
+; Almost too mathemetical, but the operations were easy enough to google...
+(define matrix '((1 2 3 4)(4 5 6 6)(6 7 8 9)))
+(define (dot-product v w)
+  (accumulate + 0 (map * v w)))
+
+(define (matrix-*-vector m v)
+  (map (lambda (row) (map * row v)) m))
+
+(define (transpose mat)
+  (accumulate-n cons nil mat))
+
+; A *lot* of mapping here.. can't be helped..
+(define (matrix-*-matrix m n)
+  (let ((cols (transpose n)))
+    (map (lambda (m-row)
+           (map (lambda (col-row)
+                  (dot-product m-row col-row))
+                cols))
+         m)))
+
+; 2.38
+(define foldr accumulate)
+(define (foldl op initial seq)
+  (define (iter result rest)
+    (if (null? rest)
+    result
+    (iter (op result (car rest))
+          (cdr rest))))
+  (iter initial seq))
+(foldr / 1 (list 1 2 3))
+; (/ 1 (/ 2 (/ 3 1)))
+; (/ 1 2/3)
+;> 3/2
+(foldl / 1 (list 1 2 3))
+; (/ (/ (/ 1 1) 2) 3)
+; (/ (/ 1 2) 3)
+; (/ 1/2 3)
+;> 1/6
+(foldr list nil (list 1 2 3))
+;> (1 (2 (3 ())))
+(foldl list nil (list 1 2 3))
+;> (((() 1) 2) 3)
+; I forget the name of the property.. it's the one that means
+; x * y == y * x
+; but
+; x / y != y / x
+; Googled it - commutative
+
+; 2.39
+(define (reverse_r seq)
+  (foldr (lambda (x y) (append y (list x))) nil seq))
+
+(define (reverse_l seq)
+  (foldl (lambda (x y) (cons y x)) nil seq))
