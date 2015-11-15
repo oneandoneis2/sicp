@@ -673,3 +673,42 @@
 
 (define (reverse_l seq)
   (foldl (lambda (x y) (cons y x)) nil seq))
+
+; pre-2.40
+(define (flatmap proc seq)
+  (accumulate append nil (map proc seq)))
+(define (prime? n)
+  (let loop ((d 2))
+    (cond ((< n (* d d)) #t)
+          ((zero? (modulo n d)) #f)
+          (else (loop (+ d 1))))))
+(define (prime-sum? pair)
+  (prime? (+ (car pair) (cadr pair))))
+(define (make-pair-sum pair)
+  (list (car pair) (cadr pair) (+ (car pair) (cadr pair))))
+(define (enumerate-interval low high)
+  (if (> low high)
+    nil
+    (cons low (enumerate-interval (+ low 1) high))))
+(define (prime-sum-pairs n)
+  (map make-pair-sum
+       (filter prime-sum?
+               (unique-pairs n))))
+
+; 2.40
+(define (unique-pairs n)
+  (flatmap
+    (lambda (i)
+      (map (lambda (j) (list i j))
+           (enumerate-interval 1 (- i 1))))
+    (enumerate-interval 1 n)))
+
+; 2.41
+(define (ordered-triples n s)
+  (filter (lambda (l) (= s (accumulate + 0 l)))
+          (flatmap (lambda (i)
+                     (flatmap (lambda (j)
+                                (map (lambda (k) (list i j k))
+                                     (enumerate-interval 1 j)))
+                              (enumerate-interval 1 i)))
+                   (enumerate-interval 1 n))))
