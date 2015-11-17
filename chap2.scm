@@ -712,3 +712,42 @@
                                      (enumerate-interval 1 j)))
                               (enumerate-interval 1 i)))
                    (enumerate-interval 1 n))))
+
+(define (queens board-size)
+  (define (queen-cols k)
+    (if (= k 0)
+      (list empty-board)
+      (filter
+        (lambda (positions) (safe? positions))
+        (flatmap
+          (lambda (prev_cols)
+            (map (lambda (row-num)
+                   (add-queen row-num prev_cols))
+                 (enumerate-interval 1 board-size)))
+          (queen-cols (- k 1))))))
+  (queen-cols board-size))
+
+; 2.42
+(define empty-board nil)
+
+(define (safe? positions)
+    (and (safe-row? positions) (safe-diag? positions)))
+
+(define (safe-row? positions)
+  (define (count-in lst num)
+    (cond ((null? lst) 0)
+          ((= (car lst) num) (+ 1 (count-in (cdr lst) num)))
+          ((count-in (cdr lst) num))))
+  (= (count-in positions (car positions)) 1))
+
+(define (safe-diag? positions)
+  (let ((test (car positions)))
+    (define (iter l count)
+      (cond ((null? l) #t)
+            ((or (= test (+ (car l) count))
+                 (= test (- (car l) count))) #f)
+            (else (iter (cdr l) (+ 1 count)))))
+    (iter (cdr positions) 1)))
+
+(define (add-queen row-num prev_cols)
+  (cons row-num prev_cols))
