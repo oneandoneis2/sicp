@@ -734,11 +734,13 @@
     (and (safe-row? positions) (safe-diag? positions)))
 
 (define (safe-row? positions)
-  (define (count-in lst num)
-    (cond ((null? lst) 0)
-          ((= (car lst) num) (+ 1 (count-in (cdr lst) num)))
-          ((count-in (cdr lst) num))))
-  (= (count-in positions (car positions)) 1))
+  (let ((test (car positions)))
+    (= 0 (accumulate +
+                   0
+                   (map (lambda (x) (if (= test x)
+                                      1
+                                      0))
+                        (cdr positions))))))
 
 (define (safe-diag? positions)
   (let ((test (car positions)))
