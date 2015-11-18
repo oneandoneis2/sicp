@@ -728,6 +728,20 @@
   (queen-cols board-size))
 
 ; 2.42
+; Pain in the arse!
+; Trying to work out the data structure from the sample code was painful
+; Key points:
+;   empty-board is defined outside of the context that knows the board size
+;       so can't be a list of board-size lists. Can only be nil
+;   the innermost map traverses the sequence 1 - board-size and add-queen doesn't
+;       know board-size so the only representation of a column that works is a number
+;   so we must be iterating over the list(s) in the "board so far" and adding every new 1-boardsize
+;       possibility to it:
+;       (()) -> ((1) (2) (3) (4)) -> ((1 1) (1 2) (1 3) (1 4) (2 1) etc... )
+;   and then we filter it down to the valid ones. Checking for row clashes is a trivial accum
+;       check, diagonals are a bit more of a PITA. Could probably write the code more tersely
+;       but this way is legible enough. It does unecessary checks like -ve nums, but they
+;       can't trigger a false positive so I don't care enough to guard against
 (define empty-board nil)
 
 (define (safe? positions)
@@ -736,11 +750,11 @@
 (define (safe-row? positions)
   (let ((test (car positions)))
     (= 0 (accumulate +
-                   0
-                   (map (lambda (x) (if (= test x)
-                                      1
-                                      0))
-                        (cdr positions))))))
+                     0
+                     (map (lambda (x) (if (= test x)
+                                        1
+                                        0))
+                          (cdr positions))))))
 
 (define (safe-diag? positions)
   (let ((test (car positions)))
