@@ -767,3 +767,13 @@
 
 (define (add-queen row-num prev_cols)
   (cons row-num prev_cols))
+
+; 2.43 It's re-running queen-cols every time, of course it's slow - almost as bad as pure fib
+
+; 2.44
+; It's annoying to write code I can't run.
+(define (up-split painter n)
+  (if (= n 0)
+    painter
+    (let ((smaller (up-split painter (- n 1))))
+      (below (beside smaller smaller) painter))))
