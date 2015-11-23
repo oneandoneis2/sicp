@@ -808,3 +808,70 @@
 (define (scale-vect n v)
   (make-vect (* n (xcor-vect v))
              (* n (ycor-vect v))))
+
+; 2.47
+; Seems like things got easy again all of a sudden.. what are they up to?
+; Imp 1:
+(define (frame_origin f)
+  (car f))
+(define (frame_edge_1 f)
+  (cadr f))
+(define (frame_edge_2 f)
+  (caddr f))
+; Imp 2:
+(define (frame_origin f)
+  (car f))
+(define (frame_edge_1 f)
+  (cadr f))
+(define (frame_edge_2 f)
+  (cddr f))
+
+; 2.48
+; Take a list of segments, return a function that will paint them to a frame
+(define (segments->painter segment-list)
+  (lambda (frame)
+    (for-each
+      (lambda (segment)
+        (draw-line
+          ((frame-coord-map frame) (start-segment segment))
+          ((frame-coord-map frame) (end-segment segment))))
+      segment-list)))
+
+(define (make-segment start end)
+  (cons start end))
+(define (start-segment s)
+  (car s))
+(define (end-segment s)
+  (cdr s))
+
+; 2.49
+; a - outline frame (remember frames go from 0 to 1!)
+(define vect-bl (make-vect 0 0))
+(define vect-tl (make-vect 0 1))
+(define vect-br (make-vect 1 0))
+(define vect-tr (make-vect 1 1))
+
+(define mid-t (make-vect 0.5 1))
+(define mid-b (make-vect 0.5 0))
+(define mid-l (make-vect 0 0.5))
+(define mid-r (make-vect 1 0.5))
+
+(define (frame-outline f)
+  (segments->painter (make-segment vect-bl vect-tl)
+                     (make-segment vect-tl vect-tr)
+                     (make-segment vect-tr vect-br)
+                     (make-segment vect-br vect-bl)))
+
+(define (frame-x f)
+  (segments->painter (make-segment vect-bl vect-tr)
+                     (make-segment vect-tl vect-br)))
+
+(define (frame-diamond f)
+  (segments->painter (make-segment mid-t mid-r)
+                     (make-segment mid-r mid-b)
+                     (make-segment mid-b mid-l)
+                     (make-segment mid-l mid-t)))
+
+(define (frame-wave f)
+  ; TBD - I'll need the physical book and/or a grid system!
+  )
