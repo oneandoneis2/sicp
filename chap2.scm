@@ -776,4 +776,35 @@
   (if (= n 0)
     painter
     (let ((smaller (up-split painter (- n 1))))
-      (below (beside smaller smaller) painter))))
+      (below painter (beside smaller smaller)))))
+
+; 2.45
+; This is where I'd reach for labels in CL, but to keep within SICP..
+(define (split op1 op2)
+  (define (rec painter n)
+    (if (= n 0)
+    painter
+    (let ((smaller (rec painter (- n 1))))
+      (op1 (op2 smaller smaller) painter))))
+  rec)
+
+; 2.46
+(define (make-vect a b)
+  (cons a b))
+(define (xcor-vect v)
+  (car v))
+(define (ycor-vect v)
+  (cdr v))  ; cons not list - cdr not cadr!
+(define (add-vect a b)
+  (make-vect (+ (xcor-vect a)
+                (xcor-vect b))
+             (+ (ycor-vect a)
+                (ycor-vect b))))
+(define (sub-vect a b)
+  (make-vect (- (xcor-vect a)
+                (xcor-vect b))
+             (- (ycor-vect a)
+                (ycor-vect b))))
+(define (scale-vect n v)
+  (make-vect (* n (xcor-vect v))
+             (* n (ycor-vect v))))
