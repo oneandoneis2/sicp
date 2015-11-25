@@ -932,10 +932,6 @@
           (bottom (beside (bl painter) (br painter))))
       (below bottom top))))
 
-; Reinforces the concept of "supply the painter OR a transofrmation to apply to a painter"
-; combine4 doesn't need the four transformed painters, it just needs one painter and it
-; already has the transformers. Very cool.
-; (Seems like this'd be a PITA with CL - you'd have to screw around with funcall etc)
 (define (square-limit painter n)
   (let ((combine4 (square-of-four flip-vert rotate180
                                   identity flip-horiz)))
