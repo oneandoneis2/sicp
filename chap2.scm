@@ -918,3 +918,25 @@
 ; Via beside & rotate
 (define (below painter1 painter2)
   (rotate270 (beside (rotate90 painter1) (rotate90 painter2))))
+
+; 2.52
+(define (corner-split painter n)
+  (if (= n 0)
+    painter
+    (beside (below painter (up-split painter (- n 1)))
+            (below (right-split painter (- n 1)) (corner-split painter (- n 1))))))
+
+(define (square-of-four tl tr bl br)
+  (lambda (painter)
+    (let ((top (beside (tl painter) (tr painter)))
+          (bottom (beside (bl painter) (br painter))))
+      (below bottom top))))
+
+; Reinforces the concept of "supply the painter OR a transofrmation to apply to a painter"
+; combine4 doesn't need the four transformed painters, it just needs one painter and it
+; already has the transformers. Very cool.
+; (Seems like this'd be a PITA with CL - you'd have to screw around with funcall etc)
+(define (square-limit painter n)
+  (let ((combine4 (square-of-four flip-vert rotate180
+                                  identity flip-horiz)))
+    (combine4 (corner-split painter n))))
