@@ -991,10 +991,8 @@
 
 (define (addend a) (cadr a))
 
-(define (augend a)
-  (if (= 1 (length (cddr a)))
-    (caddr a)
-    (cons '+ (cddr a))))    ; Not entirely happy with this approach, but..
+(define (augend s)
+  (accumulate make-sum 0 (cddr s)))
 
 (define (product? x)
   (and (pair? x) (eq? (car x) '*)))
@@ -1002,9 +1000,7 @@
 (define (multiplier p) (cadr p))
 
 (define (multiplicand p)
-  (if (= 1 (length (cddr p)))
-    (caddr p)
-    (cons '* (cddr p))))
+  (accumulate make-product 1 (cddr  p)))
 
 ; 2.56
 (define (exponentiation? x)
