@@ -1086,10 +1086,26 @@
 (define (adjoin-set x set)  ; just stop checking for dupes
   (cons x set))
 
-; 2.59
 (define (union-set set1 set2)
   (append set1 set2))   ; If we don't care about dupes, just merge the two
 ; You get some efficiency wins, like union, but it does mean you have more entries to search
 ; when using element-of-set? so it comes down to whether you're doing a lot of looking vs.
 ; doing a lot of merging. You may also like the history that allowing dupes gives you:
 ; If you keep getting the same entries over and over, you may be able to optimise.
+
+; 2.61 - ordered version
+(define (adjoin-set x set)
+  (cond ((null? set) (list x))
+        ((= x (car set)) set)
+        ((> x (car set)) (cons (car set) (adjoin-set x (cdr set))))
+        (else (cons x set))))
+
+; 2.61
+(define (union-set set1 set2)
+  (cond ((null? set1) set2)
+        ((null? set2) set1)
+        (else
+          (let ((x1 (car set1)) (x2 (car set2)))
+            (cond ((= x1 x2) (cons x1 (union-set (cdr set1) (cdr set2))))
+                  ((< x1 x2) (cons x1 (union-set (cdr set1) set2)))
+                  (else (cons x2 (union-set set1 (cdr set2)))))))))
