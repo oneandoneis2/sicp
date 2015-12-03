@@ -944,26 +944,27 @@
          (my_equal? (cdr a) (cdr b)))
     (eq? a b)))
 
-(define (deriv exp var)
-  (cond ((number? exp) 0)
-        ((variable? exp)
-         (if (same-variable? exp var) 1 0))
-        ((sum? exp)
-         (make-sum (deriv (addend exp) var)
-                   (deriv (augend exp) var)))
-        ((product? exp)
-         (make-sum
-           (make-product (multiplier exp)
-                         (deriv (multiplicand exp) var))
-           (make-product (deriv (multiplier exp) var)
-                         (multiplicand exp))))
-        ((exponentiation? exp)
-         (make-product (make-product (exponent exp)
-                                     (make-exponentiation (base exp)
-                                                          (make-sum (exponent exp) -1)))
-                       (deriv (base exp) var)))
-        (else
-          (error "unknown expression type -- DERIV" exp))))
+(define (deriv e var)
+  (let ((exp (add-parens e)))
+    (cond ((number? exp) 0)
+          ((variable? exp)
+           (if (same-variable? exp var) 1 0))
+          ((sum? exp)
+           (make-sum (deriv (addend exp) var)
+                     (deriv (augend exp) var)))
+          ((product? exp)
+           (make-sum
+             (make-product (multiplier exp)
+                           (deriv (multiplicand exp) var))
+             (make-product (deriv (multiplier exp) var)
+                           (multiplicand exp))))
+          ((exponentiation? exp)
+           (make-product (make-product (exponent exp)
+                                       (make-exponentiation (base exp)
+                                                            (make-sum (exponent exp) -1)))
+                         (deriv (base exp) var)))
+          (else
+            (error "unknown expression type -- DERIV" exp)))))
 
 (define (variable? x) (symbol? x))
 
@@ -1012,3 +1013,83 @@
   (cond ((=number? e2 0) 1)
         ((=number? e2 1) e1)
         (else (list '** e1 e2))))
+
+; 2.58
+; Ooooog. Okay. Right. So. Here's my thinking.
+; Even without parens, infix operators are binary: They take two arguments only
+; So (a + b + c) is two instances of (exp + exp), they're just nested
+; Because sum and product are commutative, they can work in any order:
+; (a + b + c) = (a + (b + c)) = ((a + b) + c)
+; (a * b * c) = (a * (b * c)) = ((a * b) * c)
+; However, because * has higher precedence than +
+; (a + b * c) = (a + (b * c)) only
+; (a * b + c) = ((a * b) + c) only
+; So, this tells us:
+; (a + b) - if b is a single thing, we're done
+;           if b is more than one thing, we need (a + (b)) - i.e. deal with b then add a
+; (a * b) - if b is a single thing, we're done
+;           if b is more than one thing, we need ((a * (car b)) (cdr b))
+;               i.e. multiple a by the first part of b before moving on
+; So to process algebra with missing parens:
+;   Single values need no work
+;   (a + seq) -> (a + (seq))
+;   (a * seq) -> ((a * seq1) seq2...)
+; This will eventually get us to the fully-paren'd expression that deriv can already handle
+; Originally, I thought this would require recursing. But it doesn't, because deriv already
+; recurses to break down all the sub expressions. So we just need to handle:
+;   Single value -> returned unchanged
+;   length-3 list -> return unchanged, it's already a valid infix expression
+;   Anything else -> put the parens around the right thing for the + or *
+
+(define (add-parens lst)
+  (cond ((not (pair? lst)) lst)
+        ((= 3 (length lst)) lst)
+        ((eq? '+ (cadr lst)) (list (car lst)
+                                   '+
+                                   (cddr lst)))
+        ((eq? '* (cadr lst)) (append (list
+                                       (list (car lst)
+                                             '*
+                                             (caddr lst)))
+                                     (cdddr lst)))))
+
+
+; Sets
+; union-set, intersection-set, element-of-set?, and adjoin-set
+
+(define (element-of-set? x set)
+  (cond ((null? set) false)
+        ((equal? x (car set)) true)
+        (else (element-of-set? x (cdr set)))))
+
+(define (adjoin-set x set)
+  (if (element-of-set? x set)
+    set
+    (cons x set)))
+
+(define (intersection-set set1 set2)
+  (cond ((or (null? set1) (null? set2)) '())
+        ((element-of-set? (car set1) set2)
+         (cons (car set1)
+               (intersection-set (cdr set1) set2)))
+        (else (intersection-set (cdr set1) set2))))
+
+; 2.59
+(define (union-set set1 set2)
+  (cond ((null? set1) set2)
+        ((element-of-set? (car set1) set2)
+         (union-set (cdr set1) set2))
+        (else (cons (car set1) (union-set (cdr set1) set2)))))
+
+; 2.60
+; Only these two need changes if we're happy with dupes
+(define (adjoin-set x set)  ; just stop checking for dupes
+  (cons x set))
+
+; 2.59
+(define (union-set set1 set2)
+  (append set1 set2))   ; If we don't care about dupes, just merge the two
+; You get some efficiency wins, like union, but it does mean you have more entries to search
+; when using element-of-set? so it comes down to whether you're doing a lot of looking vs.
+; doing a lot of merging. You may also like the history that allowing dupes gives you:
+; If you keep getting the same entries over and over, you may be able to optimise.
