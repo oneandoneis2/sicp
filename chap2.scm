@@ -1214,3 +1214,13 @@
 (define (intersection-tree tree1 tree2)
   (list->tree (intersection-set (tree->list tree1)
                                 (tree->list tree2))))
+
+; 2.66
+(define (tree-lookup given-key set-of-records)
+  (cond ((null? set-of-records) #f)
+        ((= given-key (key (entry set-of-records)))
+         (entry set-of-records))
+        ((< given-key (key (entry set-of-records)))
+         (tree-lookup given-key (left-branch set-of-records)))
+        (else
+         (tree-lookup given-key (right-branch set-of-records)))))
