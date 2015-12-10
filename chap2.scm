@@ -1308,8 +1308,9 @@
 
 (define (encode-symbol symbol tree)
   (define (correct-branch? symbol branch)
-    (cond ((leaf? branch) (eq? symbol (symbol-leaf branch)))
-          ((in-list? symbol (symbols branch)))))
+    (if (leaf? branch)
+      (eq? symbol (symbol-leaf branch))
+      (in-list? symbol (symbols branch))))
   (cond ((and (leaf? tree) (correct-branch? symbol tree)) '())
         ((correct-branch? symbol (left-branch tree))
          (cons 0 (encode-symbol symbol (left-branch tree))))
