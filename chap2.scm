@@ -1328,3 +1328,11 @@
         (else (successive-merge (adjoin-set (make-code-tree (car pairs)
                                                             (cadr pairs))
                                             (cddr pairs))))))
+
+; 2.70
+(define msg270 '(Get a job Sha na na na na na na na na Get a job Sha na na na na na na na na Wah yip yip yip yip yip yip yip yip yip Sha boom))
+(define tree270 (generate-huffman-tree '((A 2) (NA 16) (BOOM 1) (SHA 3) (GET 2) (YIP 9) (JOB 2) (WAH 1))))
+(define enc270 (encode msg270 tree270))
+(length enc270)
+; There are 84 bits. Fixed-length would require 3 bits to encode the 8 options, so
+(* 3 (length msg270)) ; 108
