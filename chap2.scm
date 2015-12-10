@@ -1240,8 +1240,8 @@
         (+ (weight left) (weight right))))
 
 (define (left-branch tree) (car tree))
-
 (define (right-branch tree) (cadr tree))
+
 (define (symbols tree)
   (if (leaf? tree)
     (list (symbol-leaf tree))
@@ -1317,3 +1317,13 @@
          (cons 1 (encode-symbol symbol (right-branch tree))))
         (else (error "bad symbol -- ENCODE-SYMBOL" symbol))))
 
+; 2.69
+(define (generate-huffman-tree pairs)
+  (successive-merge (make-leaf-set pairs)))
+
+(define (successive-merge pairs)
+  (cond ((null? pairs) '())
+        ((= 1 (length pairs)) (car pairs))
+        (else (successive-merge (adjoin-set (make-code-tree (car pairs)
+                                                            (cadr pairs))
+                                            (cddr pairs))))))
