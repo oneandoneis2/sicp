@@ -1495,3 +1495,44 @@
                                                      (make-sum (exponent exp) -1)))
                   (deriv (base exp) var)))
   (put 'deriv '** deriv-exp))
+
+; 2.74
+; Seems rather vague at first glance.. just "everything's different, write code for it"
+; Still.. let's get what we know summed up
+; IE has multiple divisions
+; Divisions have one personnel file, each using its own structure
+; Files contain records of all employees, keyed by name, different structure per div.
+; Employee records contain a keyed set of inormation, varied by div.
+; So, IE -> Divs -> File -> employees -> employee data
+; So, logically..
+(define (get-record employee file)
+  ((get 'get-record (division file)) employee
+                                      file))
+; ^ Assumptions made: We have a "division" function to find out what division a file belongs to
+;                     We have a "get" function that can retrieve the appropriate operation
+;                       from the dispatch table given the operation and the division
+;                     The retrieved function knows how to retrieve the record given the employee
+;                       and file variables. The only type data needed at this point is the
+;                       division that owns the file, which we assume is attached to the file itself
+
+(define (get-salary record)
+  ((get 'get-salary (division record)) record))
+; ^ Pretty similar, we assume that the record knows what division it belongs to (which seems
+; reasonable since record formats vary per division) and that we have the required functions
+; etc. to get the type and use it to retrieve the right operation
+
+(define (find-employee-record employee files)
+  (define (iter lst)
+    (if (null? lst)
+      (error "Employee not in records" employee)
+      (else (let ((rec (get-record employee (car lst))))
+              (if (null? rec)
+                (iter (cdr lst))
+                rec)))))
+  (iter files))
+; ^ Basic assumption here is that get-record returns null if it finds no record.
+; We just iterate over the files checking each for the employee, and return the record when found
+; If not found, throw an error.
+
+; Lastly, d: Just add the relevant operations for the new division to the dispatch table.
+; Everything will JFW at that point
