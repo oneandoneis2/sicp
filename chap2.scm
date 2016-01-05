@@ -1589,11 +1589,13 @@
         ((pair? datum) (cdr datum))
         (else (error "Bad tagged datum -- CONTENTS" datum))))
 
-; 2.79
+; 2.79 & 2.28
 (define (add x y) (apply-generic 'add x y))
 (define (sub x y) (apply-generic 'sub x y))
 (define (mul x y) (apply-generic 'mul x y))
 (define (div x y) (apply-generic 'div x y))
+(define (equ? x y) (apply-generic 'equ? x y))
+(define (=zero? x) (apply-generic '=zero? x))
 (define (install-scheme-number-package)
   (define (tag x)
     (attach-tag 'scheme-number x))
@@ -1607,6 +1609,10 @@
        (lambda (x y) (tag (/ x y))))
   (put 'make 'scheme-number
        (lambda (x) (tag x)))
+  (put 'equ? '(scheme-number scheme-number)
+       (lambda (x y) (= x y)))
+  (put '=zero 'scheme-number
+       (lambda (x) (equ? 0 x)))
   'done)
 
 (define (install-rational-package)
@@ -1640,6 +1646,11 @@
        (lambda (x y) (tag (mul-rat x y))))
   (put 'div '(rational rational)
        (lambda (x y) (tag (div-rat x y))))
+  (put 'equ? '(rational rational)
+       (lambda (x y) (= (* (numer x) (denom y))
+                        (* (numer y) (denom x)))))
+  (put '=zero? 'rational
+       (lambda (n) (equ? 0 n)))
 
   (put 'make 'rational
        (lambda (n d) (tag (make-rat n d))))
@@ -1676,6 +1687,11 @@
        (lambda (z1 z2) (tag (mul-complex z1 z2))))
   (put 'div '(complex complex)
        (lambda (z1 z2) (tag (div-complex z1 z2))))
+  (put 'equ? '(complex complex)
+       (lambda (x y) (and (= (real-part x) (real-part y))
+                          (= (imag-part x) (imag-part y)))))
+  (put '=zero? 'complex
+       (lambda (x) (equ? 0 x)))
   (put 'make-from-real-imag 'complex
        (lambda (x y) (tag (make-from-real-imag x y))))
   (put 'make-from-mag-ang 'complex
