@@ -1536,3 +1536,33 @@
 
 ; Lastly, d: Just add the relevant operations for the new division to the dispatch table.
 ; Everything will JFW at that point
+
+; 2.75
+(define (make-from-mag-ang x y)
+  (define (dispatch op)
+    (cond ((eq? op 'real-part) (* x (cos y)))
+          ((eq? op 'imag-part) (* x (sin y)))
+          ((eq? op 'magnitude) x)
+          ((eq? op 'angle) y)
+          (else
+            (error "Unknown op -- MAKE-FROM-REAL-IMAG" op))))
+  dispatch)
+
+; 2.76
+; Explicit: The "install package" approach with tagged data
+;   Pros: Simplicity
+;   Cons: Need to update every package for each new type and op
+;
+; Data-directed: Generic functions
+;   Pros: Concise
+;   Cons: More "book keeping" code to make it all work
+;   I rate this as the best choice for changeable systems, whether type or op:
+;       One of the others might seem better for variable types, since it keeps all logic
+;         associated with that type. But each type must have operations to handle all other
+;         types. So adding a new type would mean updating every existing type. Not helpful.
+;       With generics, you can keep all the different versions of a function grouped together
+;         in a useful way.
+;
+; Message-passing: OO
+;   Pros: Concise
+;   Cons: All logic for functions kept in the object itself
