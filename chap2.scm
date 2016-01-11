@@ -1765,7 +1765,8 @@
         (apply proc (map contents args))
         (let ((coercions (get-coercions type-tags type-tags)))
           (if coercions
-            (apply-generic op (map (lambda (coercion arg) (coercion arg)) coercions args))
+            (let (cargs (map (lambda (coercion arg) (coercion arg)) coercions args))
+              (apply apply-generic (cons op cargs)))
             (error "No method for these types" (list op type-tags))))))
     (error "No method for these types" (list op type-tags))))
 ; Note: This will endlessly-loop if there's no suitable process to operate on params
@@ -1783,3 +1784,33 @@
 ; Real -> complex
 (put 'raise 'real
      (lambda (r) (make-complex-from-real-imag r 0)))
+
+; 2.84
+(define (apply-generic op . args)
+  (let ((type-tags (map type-tag args)))
+    (let ((proc (get op type-tags)))
+      (if proc
+        (apply proc (map contents args))
+        (if (= (length args) 2)
+          (let ((type1 (car type-tags))
+                (type2 (cadr type-tags)))
+            (if (not (equal? type1 type2))
+              (let ((raised (raise-to-equal args)))
+                (apply-generic op (car raised) (cadr raised)))
+              (error "No method for these types" (list op type-tags))))
+          (error "No method for these types" (list op type-tags)))))))
+
+(define (raise-to-equal args)
+  (define (raised-order x)
+    ; Probably nicer ways to do this.. but we don't know about hashes etc. yet!
+    (cond ((eq? x 'integer)  0)
+          ((eq? x 'rational) 1)
+          ((eq? x 'real)     2)
+          ((eq? x 'complex)  3)))
+  (let ((a1 (car args))
+        (a2 (cadr args)))
+    (let ((ta1 (type-tag a1))
+          (ta2 (type-tag a2)))
+      (cond ((eq? ta1 ta2) args)
+            ((> ta1 ta2) (raise-to-equal (list a1 (raise a2))))
+            (else (raise-to-equal (list (raise a1) a2)))))))
