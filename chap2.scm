@@ -1771,3 +1771,15 @@
 ; Note: This will endlessly-loop if there's no suitable process to operate on params
 ; that have been coerced already.
 ; It will also not work on items that could be coerced to a type that is not in the list.
+
+; 2.83
+(define (raise x) (apply-generic 'raise x))
+; Integer -> rational
+(put 'raise 'integer
+     (lambda (i) (make-rational i 1)))
+; Rational -> real
+(put 'raise 'rational
+     (lambda (r) (* 1.0 (/ (numer r) (denom r)))))
+; Real -> complex
+(put 'raise 'real
+     (lambda (r) (make-complex-from-real-imag r 0)))
