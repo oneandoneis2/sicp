@@ -1736,3 +1736,38 @@
                                (list op type-tags)))))))
           (error "No method for these types"
                  (list op type-tags)))))))
+
+; 2.82
+(define (apply-generic op . args)
+  (define (id x) x) ; I'm surprised this doesn't seem to exist, but we need it
+  (define (get-coercions types lst)
+    ; This function tries to get the list of coercions that will coerce all items
+    ; to the same type. If it fails, it returns the empty list
+    (define (iter t l a)
+      ; This function tries the first type in t on all elements in l
+      ; If all elements in l can be coerced to that type, it returns a list of
+      ; the coercion operations. Else it tries the next item in t until t is exhausted
+      ; whereupon it returns nil
+      (let ((to_type (car t))
+            (from_type (car l)))
+        (cond ((null? l) a) ; Passed-in list is empty - we got coercions for all!
+              ((null? t) '()) ; Ran out of types to try coercing to :(
+              ((equal? to_type from_type) (iter t (cdr l) (cons id a))) ; No coerce needed
+              (else (let ((op (get-coercion from_type to_type)))
+                      (if op    ; can we coerce to the desired type?
+                        (iter t (cdr l) (cons op a)) ; Yes! Onto the next one
+                        (iter (cdr t) lst '()))))))) ; No :( Try the next type, reset to original
+                                                     ; list and empty accumulator
+    (iter types lst '()))
+  (let ((type-tags (map type-tag args)))
+    (let ((proc (get op type-tags)))
+      (if proc
+        (apply proc (map contents args))
+        (let ((coercions (get-coercions type-tags type-tags)))
+          (if coercions
+            (apply-generic op (map (lambda (coercion arg) (coercion arg)) coercions args))
+            (error "No method for these types" (list op type-tags))))))
+    (error "No method for these types" (list op type-tags))))
+; Note: This will endlessly-loop if there's no suitable process to operate on params
+; that have been coerced already.
+; It will also not work on items that could be coerced to a type that is not in the list.
