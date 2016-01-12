@@ -1814,3 +1814,36 @@
       (cond ((eq? ta1 ta2) args)
             ((> ta1 ta2) (raise-to-equal (list a1 (raise a2))))
             (else (raise-to-equal (list (raise a1) a2)))))))
+
+; 2.85
+(define (project x) (apply-generic 'project x))
+(put 'project 'rational
+     (lambda (x) (numer x)))
+(put 'project 'real
+     (lambda (x) (round x)))
+(put 'project 'complex
+     (lambda (x) (real-part x)))
+
+(define (drop x)
+  (let (projected (project x))
+    (if (and (equ? x (raise projected))
+             (not (eq? 'scheme-number (type-tag x))))
+      (drop projected)
+      x)))
+
+(define (apply-generic op . args)
+  (let ((type-tags (map type-tag args)))
+    (let ((proc (get op type-tags)))
+      (if proc
+        (let (result (apply proc (map contents args)))
+          (if (or (eq? op 'equ) (eq? op 'raise)) ; Don't drop in a raise or equality test
+            result
+            (drop result)))
+        (if (= (length args) 2)
+          (let ((type1 (car type-tags))
+                (type2 (cadr type-tags)))
+            (if (not (equal? type1 type2))
+              (let ((raised (raise-to-equal args)))
+                (apply-generic op (car raised) (cadr raised)))
+              (error "No method for these types" (list op type-tags))))
+          (error "No method for these types" (list op type-tags)))))))
