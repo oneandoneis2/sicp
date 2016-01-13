@@ -1847,3 +1847,9 @@
                 (apply-generic op (car raised) (cadr raised)))
               (error "No method for these types" (list op type-tags))))
           (error "No method for these types" (list op type-tags)))))))
+
+; 2.86 +
+; No, I just can't be bothered. It's really cool to see how the generic concept lends itself
+; even to having polynomial fractions and all... but I'm sick of re-writing apply-generic
+; Probably worth coming back to it, but I just don't see enough value in hammering the
+; "Look how generic we can get!" point this far to justify the amount of time it's going to take
