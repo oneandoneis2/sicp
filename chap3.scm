@@ -60,3 +60,35 @@
         (begin (set! count (+ 1 count))
                wrong_pass)))
     dispatch))
+
+; 3.5
+(define (monte-carlo trials experiment)
+  (define (iter trials-remaining trials-passed)
+    (cond ((= trials-remaining 0)
+           (/ trials-passed trials))
+          ((experiment)
+           (iter (- trials-remaining 1) (+ trials-passed 1)))
+          (else
+            (iter (- trials-remaining 1) trials-passed))))
+  (iter trials 0))
+
+(define (random-in-range low high)
+  (let ((range (- high low)))
+    (+ low (random range))))
+
+(define (estimate-integral p x1 x2 y1 y2 trials)
+  (define (experiment) (p (random-in-range x1 x2) (random-in-range y1 y2)))
+  (monte-carlo trials experiment))
+
+(define (estimate-pi trials)
+  ; Area of a circle = pi r²
+  ; If r = 1 then area = pi
+  ; So a box that's 2x2 can hold a circle that's r = 1
+  (define (test-circle x y) (<= (+ (square x) (square y)) 1))
+  ( * (* 2.0 2.0)   ; Area of box
+      (estimate-integral test-circle
+                         -1.0 1.0 -1.0 1.0  ; Must be floats or r-i-r only does ints - no good!
+                         trials)))  ; Proportion of box that is circle
+; (estimate-pi 10000000)
+; ;Value: 3.1416156
+; Close enough! :)
