@@ -92,3 +92,16 @@
 ; (estimate-pi 10000000)
 ; ;Value: 3.1416156
 ; Close enough! :)
+
+; 3.6
+(define random-init 4) ; Chosen by fair dice roll. Gauranteed random.
+(define rand
+  (let ((x random-init))
+    (define (rand-update n) (+ 1 n))
+    (lambda (type)
+      (cond ((eq? type 'generate) (begin (set! x (rand-update x))
+                                         x))
+            ((eq? type 'reset) (lambda (new)
+                                 (set! x new)
+                                 x))
+            (else (error "Unknown random operation: " type))))))
