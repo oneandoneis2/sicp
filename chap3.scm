@@ -149,3 +149,15 @@
 ; 97
 ; ((peter-acc 'open-sesame 'withdraw) 1)
 ; 96
+
+; 3.8
+(define f
+  ; Toggle between returning param and 0
+  (let ((count 0))
+    (lambda (x) (if (= count 0)
+                  (begin (set! count 1) x)
+                  (begin (set! count 0) 0)))))
+; (+ (f 0) (f 1))
+; 1
+; (+ (f 1) (f 0))
+; 0
