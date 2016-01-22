@@ -105,3 +105,47 @@
                                  (set! x new)
                                  x))
             (else (error "Unknown random operation: " type))))))
+
+; 3.7
+(define (make-account balance pwd)
+  (define (withdraw amount)
+    (if (>= balance amount)
+      (begin (set! balance (- balance amount))
+             balance)
+      "Insufficient funds"))
+  (define (deposit amount)
+    (set! balance (+ balance amount))
+    balance)
+  (define (wrong_pass amount)
+    "Incorrect password")
+  (define (dispatch pass m)
+    (if (eq? pass pwd)
+      (cond ((eq? m 'withdraw) withdraw)
+            ((eq? m 'deposit) deposit)
+            ((eq? m 'make-joint) (lambda (new-pass)
+                                   (lambda (pwd m)
+                                     (if (eq? pwd new-pass)
+                                       (dispatch pass m)))))
+            (else (error "Unknown request -- MAKE-ACCOUNT"
+                         m)))
+      wrong_pass))
+  dispatch)
+
+(define (make-joint acc acc-pass new-pass)
+  ; It's tempting to just return a function with the original account & pass
+  ; stored here. But that doesn't involve changing make-account as per their hint.
+  ; We'll need a different approach for that....
+  ; So, it's a function that makes a function
+  ; that makes a function that returns a function.
+  ; What's wrong with that..?
+  ((acc acc-pass 'make-joint) new-pass))
+; (define peter-acc (make-account 100 'open-sesame))
+; ((peter-acc 'open-sesame 'withdraw) 1)
+; 99
+; ((peter-acc 'open-sesame 'withdraw) 1)
+; 98
+; (define paul-acc (make-joint peter-acc 'open-sesame 'rosebud))
+; ((paul-acc 'rosebud 'withdraw) 1)
+; 97
+; ((peter-acc 'open-sesame 'withdraw) 1)
+; 96
