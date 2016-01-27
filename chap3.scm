@@ -161,3 +161,29 @@
 ; 1
 ; (+ (f 1) (f 0))
 ; 0
+
+; 3.12
+; First (cdr x) -> (b) because append does not mutate
+; Second (cdr x) -> (b c d) because append! points the last cdr in x to y
+
+; 3.13
+; It never ends - cyclic list!
+
+; 3.14
+; mystery is a weird alternative reverse
+
+; 3.17
+(define (count-pairs x)
+  (let ((pairs-seen '()))
+    (define (count-if-unseen pair)
+      (let ((already-seen (filter (lambda (x) (eq? x pair)) pairs-seen)))
+        (if (null? already-seen)
+          (begin (set! pairs-seen (cons pair pairs-seen))
+                 1)
+          0)))
+    (define (iter pair)
+      (cond ((not (pair? pair)) 0)
+            ((+ (iter (car pair))
+                (iter (cdr pair))
+                (count-if-unseen pair)))))
+    (iter x)))
