@@ -173,17 +173,54 @@
 ; mystery is a weird alternative reverse
 
 ; 3.17
+
 (define (count-pairs x)
-  (let ((pairs-seen '()))
+  (let ((seen '()))
     (define (count-if-unseen pair)
-      (let ((already-seen (filter (lambda (x) (eq? x pair)) pairs-seen)))
-        (if (null? already-seen)
-          (begin (set! pairs-seen (cons pair pairs-seen))
-                 1)
-          0)))
+      (if (memq pair seen)
+        0
+        (begin (set! seen (cons pair seen))
+               1)))
     (define (iter pair)
-      (cond ((not (pair? pair)) 0)
-            ((+ (iter (car pair))
-                (iter (cdr pair))
-                (count-if-unseen pair)))))
+      (if (not (pair? pair))
+        0
+        (+ (iter (car pair))
+           (iter (cdr pair))
+           (count-if-unseen pair))))
     (iter x)))
+
+; 3.18
+(define (make-cycle x)
+  (set-cdr! (last-pair x) x)
+  x)
+(define z (make-cycle (list 'a 'b 'c)))
+(define (detect-cyclic-list x)
+  ; Note: Exercise only wants to know about simple lists, not arbitrary nestings thereof
+  (let ((seen '()))
+    (define (detect-if-seen lst)
+      (if (memq lst seen)
+        #t
+        (begin (set! seen (cons lst seen))
+               #f)))
+    (define (iter lst)
+      (if (null? lst)
+        #f
+        (or (detect-if-seen lst)
+            (iter (cdr lst)))))
+    (iter x)))
+
+; 3.19
+; Tortoise vs. hare! t moves on one iterm at a time, h moves two.
+(define (detect-cyclic-list2 x)
+  (define (safe-cdr l)
+    (if (null? l)
+      '()
+      (cdr l)))
+  (let ((t x) (h x))
+    (define (iter)
+      (set! t (safe-cdr t))
+      (set! h (safe-cdr (safe-cdr h)))
+      (cond ((eq? t h) #t)  ; This can only happen if there's a loop
+            ((null? h) #f)  ; If there's no loop, h will reach the end first
+            (else (iter))))   ; Haven't found a loop, haven't reached the end, keep going
+    (iter)))
