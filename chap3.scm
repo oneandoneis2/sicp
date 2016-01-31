@@ -224,3 +224,88 @@
             ((null? h) #f)  ; If there's no loop, h will reach the end first
             (else (iter))))   ; Haven't found a loop, haven't reached the end, keep going
     (iter)))
+
+; Queues
+(define (make-queue) (cons '() '()))
+(define (empty-queue? q) (null? (front-ptr q)))
+(define (front-queue q)
+  (if (empty-queue? q)
+    (error "FRONT called with an empty queue" q)
+    (car (front-ptr q))))
+(define (insert-queue! q i)
+  (let ((new-pair (cons i '())))
+    (cond ((empty-queue? q)
+           (set-front-ptr! q new-pair)
+           (set-rear-ptr! q new-pair)
+           q)
+          (else
+            (set-cdr! (rear-ptr q) new-pair)
+            (set-rear-ptr! q new-pair)
+            q))))
+(define (delete-queue! q)
+  (cond ((empty-queue? q)
+         (error "DELETE! called with an empty queue" q))
+        (else
+          (set-front-ptr! q (cdr (front-ptr q)))
+          q)))
+
+(define (front-ptr q) (car q))
+(define (rear-ptr q) (cdr q))
+(define (set-front-ptr! q i) (set-car! q i))
+(define (set-rear-ptr! q i) (set-cdr! q i))
+
+; 3.21
+; The queue is interpreted as a list, for which the output is correct.
+; e.g. the queue 'a b' is the list ((a b) b), and deleting from the queue
+; only updates the car because it doesn't need to update the cdr too
+(define (print-queue q)
+  (if (empty-queue? q)
+    (display "Empty queue")
+    (let ((queue (front-ptr q)))
+      (map (lambda (x) (display x)(display " ")) queue)
+      (newline)
+      q)))
+
+; 3.22
+(define (make-queue)
+  (let ((front-ptr '())
+        (rear-ptr '()))
+    (define (empty-queue?) (null? front-ptr))
+    (define (front-queue)
+      (if (empty-queue?)
+        (error "FRONT called with an empty queue")
+        (car front-ptr)))
+    (define (insert-queue! i)
+      (let ((new-pair (cons i '())))
+        (cond ((empty-queue?)
+               (set! front-ptr new-pair)
+               (set! rear-ptr new-pair)
+               dispatch)
+              (else
+                (set-cdr! rear-ptr new-pair)
+                (set! rear-ptr new-pair)
+                dispatch))))
+    (define (delete-queue!)
+      (cond ((empty-queue?)
+             (error "DELETE! called with an empty queue"))
+            (else
+              (set! front-ptr (cdr front-ptr))
+              dispatch)))
+    (define (print-queue)
+      (if (empty-queue?)
+        (display "Empty queue")
+        (map (lambda (x) (display x)(display " ")) front-ptr)))
+    (define (dispatch m)
+      (cond ((eq? m 'empty?) (empty-queue?))
+            ((eq? m 'front) (front-queue))
+            ((eq? m 'insert) insert-queue!)
+            ((eq? m 'delete) (delete-queue!))
+            ((eq? m 'print) (print-queue))
+            (else (error "Undefined operation -- QUEUE" m))))
+    dispatch))
+
+(define (empty-queue? q) (q 'empty?))
+(define (front-queue q) (q 'front))
+(define (insert-queue! q i) ((q 'insert) i))
+(define (delete-queue! q) (q 'delete))
+(define (print-queue q) (q 'print))
