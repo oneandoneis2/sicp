@@ -309,3 +309,86 @@
 (define (insert-queue! q i) ((q 'insert) i))
 (define (delete-queue! q) (q 'delete))
 (define (print-queue q) (q 'print))
+
+; 3.23
+; The tricky part here is that you need to be able to backtrack from the last element
+; in order to be able to delete the last element. So whilst initially it seems like
+; you can just copy the original queue for the most part, it doesn't work.
+; Nor does "I'll keep track on the penultimate as well" since you may need to wipe out
+; multiple last elements. Realistically, the best way is to make a doubly-linked-list,
+; one that tracks elements in both directions.
+; Rather than implement it from scratch, may as well re-use the built in list stuff
+; where possible. So a standard list, but with a car that contains a cons, the car of
+; which has the value, the cdr of which has a pointer to the previous cell.
+; So, a list where caar gets value, cdar gets prev, cdr gets next
+;
+;     1st             last
+;      |               |
+;  |->[ ][ ]->[ ][ ]->[ ][/]
+;  |   |       |       |
+;  |  [1][/]  [2][ ]  [3][ ]
+;  |______________|    ...|
+
+(define (front-dq-ptr dq) (car dq))
+(define (next-dq-ptr dq) (cdar dq))
+(define (rear-dq-ptr dq) (cdr dq))
+(define (prev-dq-ptr dq) (cdadr dq))
+(define (set-front-dq-ptr! dq new) (set-car! dq new))
+(define (set-rear-dq-ptr! dq new) (set-cdr! dq new))
+(define (set-de-next! de new) (set-cdr! de new))
+(define (set-de-prev! de new) (set-cdr! (car de) new))
+(define (get-de-val de) (car de))
+(define (mk-dq-item i) (cons (cons i '()) '()))
+
+(define (make-deque) (cons '() '()))
+(define (empty-deque? dq) (null? (front-dq-ptr dq)))
+(define (front-deque dq)
+  (if (empty-deque? dq)
+    (error "FRONT called on empty deque" dq)
+    (get-de-val (front-dq-ptr dq))))
+(define (rear-deque dq)
+  (if (empty-deque? dq)
+    (error "REAR called on empty deque" dq)
+    (get-de-val (rear-dq-ptr dq))))
+(define (print-deque dq)
+  (if (empty-deque? dq)
+    (display "Empty queue")
+    (let ((q (front-dq-ptr dq)))
+      (map (lambda (x) (display (get-de-val x))(display " ")) q)
+      (newline))))
+(define (front-insert-deque! dq i)
+  (let ((new-dq (mk-dq-item i)))
+    (cond ((empty-deque? dq)
+           (set-front-dq-ptr! dq new-dq)
+           (set-rear-dq-ptr! dq new-dq))
+          (else
+            (set-de-prev! (front-dq-ptr dq) new-dq)
+            (set-de-next! new-dq (front-dq-ptr dq))
+            (set-front-dq-ptr! dq new-dq)))))
+(define (rear-insert-deque! dq i)
+  (let ((new-dq (mk-dq-item i)))
+    (cond ((empty-deque? dq)
+           (set-front-dq-ptr! dq new-dq)
+           (set-rear-dq-ptr! dq new-dq))
+          (else
+            (set-de-prev! new-dq (rear-dq-ptr dq))
+            (set-de-next! (rear-dq-ptr dq) new-dq)
+            (set-rear-dq-ptr! dq new-dq)))))
+(define (front-delete-deque! dq)
+  (cond ((empty-deque? dq)
+         (error "DELETE! called on empty deque dq"))
+        (else
+          (let ((next (next-dq-ptr dq)))
+            (if (null? next)
+              (set-rear-dq-ptr! dq '())
+              (set-de-prev! next '()))
+            (set-front-dq-ptr! dq next)))))
+(define (rear-delete-deque! dq)
+  (cond ((empty-deque? dq)
+         (error "DELETE! called on empty deque dq"))
+        (else
+          (let ((prev (prev-dq-ptr dq)))
+            (if (null? prev)
+              (set-front-dq-ptr! dq '())
+              (set-de-next! prev '()))
+            (set-rear-dq-ptr! dq prev)))))
