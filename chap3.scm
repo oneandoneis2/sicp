@@ -462,3 +462,52 @@
             ((eq? m 'insert-proc!) insert!)
             (else (error "Unknown operation -- TABLE" m))))
     dispatch))
+
+; 3.26 - Surprisingly nice to implement!
+(define (make-table-tree)
+  ; For a tree that's made up of ((key value) left-ptr right-ptr)
+  ; where an empty list represents termination
+
+  ; Define some utility methods:
+  (define (entry tree) (cdar tree))
+  (define (id tree) (caar tree))
+  (define (left-branch tree) (cadr tree))
+  (define (right-branch tree) (caddr tree))
+  (define (make-tree key value left right) (list (cons key value) left right))
+  ; and mutators
+  (define (set-tree-right! tree new) (set-car! (cddr tree) new))
+  (define (set-tree-left! tree new) (set-car! (cdr tree) new))
+  (define (set-tree-val! tree new) (set-cdr! (car tree) new))
+
+  (let ((local-table (list '*table*)))
+    (define (lookup key)
+      (define (iter tree)
+        ; Nice & simple tree iteration, go left or right until found/out of tree
+        (cond ((null? tree) #f)
+              ((= key (id tree)) (entry tree))
+              ((< key (id tree)) (iter (left-branch tree)))
+              (else (iter (right-branch tree)))))
+      (iter (cdr local-table)))
+    (define (insert! key value)
+      (define (iter tree)
+        (cond ((null? tree) (set-cdr! local-table (make-tree key value '() '())))
+              ; ^ Only happens if no nodes have been entered yet,
+              ; i.e. local-table is just (*table*)
+              ((= key (id tree)) (set-tree-val! tree value)) ; Exists, mutate
+              ((< key (id tree)) ; Either iterate further or create new left node
+               (if (null? (left-branch tree))
+                 (set-tree-left! tree (make-tree key value '() '()))
+                 (iter (left-branch tree))))
+              (else ; Ditto, only on right
+                (if (null? (right-branch tree))
+                  (set-tree-right! tree (make-tree key value '() '()))
+                  (iter (right-branch tree))))))
+      (iter (cdr local-table))
+      'ok)
+    (define (show-tree) (display local-table))
+    (define (dispatch m)
+      (cond ((eq? m 'lookup-proc) lookup)
+            ((eq? m 'insert-proc!) insert!)
+            ((eq? m 'display) (show-tree))
+            (else (error "Unknown operation -- TABLE" m))))
+    dispatch))
