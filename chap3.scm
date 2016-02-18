@@ -978,3 +978,65 @@
 (probe "Celsius temp" C)
 (probe "Fahrenheit temp" F)
 (set-value! C 25 'user)
+
+; 3.38
+; a: $40, $50, $45, $35
+; b: $110, $80, $30
+
+; 3.39
+; 100 as well as 101, 121 as the set can now be affected by the interleaving
+
+; 3.40
+; 1,000,000 100,000 10,000 1,000 100
+; 1,000,000
+
+; 3.41
+; Why would a single read-only operation need serializing..?
+
+; 3.42
+; BB is right, this is more efficient but functionally identical
+
+; 3.44
+; He's wrong - so long as the money is in from-account (as we're told to assume)
+; this is safe. It's a single operation submitted to a serialized function in both cases.
+
+; 3.45
+; It results in serialising the serialiser, which leads to mutex.
+; It will effectively be waiting for itself forever.
+
+; 3.47
+; I hate the concept of mangling a single-use thing for a multi-use, but..
+; a:
+(define (make-semaphore n)
+  (let ((mutex (make-mutex))
+        (taken 0))
+    (define (the-sem m)
+      (cond ((eq? m 'acquire)
+             (mutex 'acquire)
+             (if (< taken n)
+               (begin (set! taken (+ 1 taken)) (mutex 'release))
+               (begin (mutex 'release) (the-sem 'acquire))
+               (mutex 'release)))
+            ((eq? m 'release)
+             (mutex 'acquire)
+             (set! taken (- taken 1))
+             (mutex 'release)))
+      )
+    the-sem))
+
+; b:
+(define (make-semaphore n)
+  (define (test-and-set! cell)
+    (if (< (car cell) n)
+      (begin (set-car! cell (+ 1 (car cell)))
+             false)
+      true))
+  (define (reduce! cell)
+    (set-car! cell (- 1 (car cell))))
+  (let ((cell (list 0)))
+    (define (the-semaphore m)
+      (cond ((eq? m 'acquire)
+             (if (test-and-set! cell)
+               (the-semaphore 'acquire))) ; retry
+            ((eq? m 'release) (reduce! cell))))
+    the-semaphore))
