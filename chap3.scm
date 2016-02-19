@@ -1023,6 +1023,18 @@
              (mutex 'release)))
       )
     the-sem))
+; Alternatively, and within the letter of the law(?)
+; ...since make-serializer uses mutex, just use it on a normal function
+(define (make-semaphore n)
+  (let ((taken 0))
+    (define (the-sem m)
+      (cond ((eq? m 'acquire)
+             (if (< taken n)
+               (set! taken (+ 1 taken))
+               (the-sem 'acquire)))
+            ((eq? m 'release)
+             (set! taken (- taken 1)))))
+    ((make-serializer) the-sem)))
 
 ; b:
 (define (make-semaphore n)
