@@ -1052,3 +1052,136 @@
                (the-semaphore 'acquire))) ; retry
             ((eq? m 'release) (reduce! cell))))
     the-semaphore))
+
+; 3.48
+(define accounts-created 0)
+(define (make-account-and-serializer balance)
+  (define (withdraw amount)
+    (if (>= balance amount)
+      (begin (set! balance (- balance amount))
+             balance)
+      "Insufficient funds"))
+  (define (deposit amount)
+    (set! balance (+ balance amount))
+    balance)
+  (set! accounts-created (+ 1 accounts-created))
+  (let ((balance-serializer (make-serializer))
+        (accnum accounts-created))
+    (define (dispatch m)
+      (cond ((eq? m 'withdraw) withdraw)
+            ((eq? m 'deposit) deposit)
+            ((eq? m 'balance) balance)
+            ((eq? m 'serializer) balance-serializer)
+            ((eq? m 'accnum) accnum)
+            (else (error "Unknown request -- MAKE-ACCOUNT"
+                         m))))
+    dispatch))
+
+(define (serialized-exchange account1 account2)
+  (let ((serializer1 (account1 'serializer))
+        (serializer2 (account2 'serializer)))
+    (if (> (account1 'accnum) (account2 'accnum))
+      ((serializer1 (serializer2 exchange))
+       account1
+       account2)
+      ((serializer2 (serializer1 exchange))
+       account1
+       account2))))
+; Because both attempts to get a lock on the two accounts will both go for the
+; same account first, there's no possibility of the deadlock arising
+
+; 3.49
+; Operations on a list of lists
+
+; 3.50
+(define (stream-map proc . argstreams)
+  (if (stream-null? (car argstreams))
+    the-empty-stream
+    (begin
+      (apply proc (map stream-car argstreams))
+      (apply stream-map
+             (cons proc (map stream-cdr argstreams))))))
+
+; 3.51
+;(define x (stream-map show (stream-enumerate-interval 0 10)))
+; Generate lazy list of 0..10
+; Passed to stream-map, prints 0 & returns (0 . (promise of 1-10))
+;(stream-ref x 5)
+; prints 1-5
+;> 5
+;(stream-ref x 7)
+; prints 6-7 (1-5 is memo'd)
+;> 7
+
+; 3.52
+; (define sum 0)
+; 0
+; (define (accum x)
+;   (set! sum (+ x sum))
+;   sum)
+; 0
+; (define seq (stream-map accum (stream-enumerate-interval 1 20)))
+; generate lazy list of 1-20
+; mapping accum over it results in sum being the total of values seen so far
+; seq is thus the list of different values of sum: (1 3 6 10 15...)
+;> 1
+; (define y (stream-filter even? seq))
+; calc seq until even number found
+; first even in seq is when sum is 6
+;> 6
+; (define z (stream-filter (lambda (x) (= (remainder x 5) 0))
+;                            seq))
+;> First number that divides by 5 is when sum is 10
+;> 10
+; (stream-ref y 7)
+; seq = (1 3 6 10 15 21 28 36 45 55 66 78 91 105 120 136 153 171 190 210)
+; y = (6 10 28 36 66 78 120 136 190 210)
+;> 136
+; (display-stream z)
+;> (10 15 45 55 105 120 190 210)
+;> 210
+; Without memoization, we'd have evaluated many values more than once, so sum would be
+; much larger by the end, and less predicatable
+
+; 3.53
+; It's the double stream again
+
+; 3.54
+(define (add-streams s1 s2)
+  (stream-map + s1 s2))
+(define (mul-streams s1 s2)
+  (stream-map * s1 s2))
+(define factorials (cons-stream 1 (mul-streams factorials (integers-starting-from 2))))
+
+; 3.55
+(define (partial-sums s)
+  (add-streams s (cons-stream 0 (partial-sums s))))
+
+; 3.56
+(define S (cons-stream 1
+                       (merge (scale-stream S 2)
+                              (merge (scale-stream S 3)
+                                     (scale-stream S 5)))))
+
+; 3.57
+; Depends if you count all the calculations done to retrieve the memo'd answers :)
+; Since we calc fib(n) by adding the two previous answers, and all answers are memo'd
+; and we started with the 0 and 1 values, it's n-1 sums
+; Without memoing, it's the usual fib exponential growth in calcs
+
+; 3.58
+; No idea, ask someone who knows more maths
+
+; 3.59
+; a
+(define (integrate-series s)
+  (mul-streams s (stream-map (lambda (x) (/ 1 x)) integers)))
+
+; b
+(define sine-series
+  (cons-stream 0 (integrate-series cosine-series)))
+(define cosine-series
+  (cons-stream 1 (integrate-series (scale-stream sine-series -1))))
+; ...maths
+
+
