@@ -1015,8 +1015,8 @@
              (mutex 'acquire)
              (if (< taken n)
                (begin (set! taken (+ 1 taken)) (mutex 'release))
-               (begin (mutex 'release) (the-sem 'acquire))
-               (mutex 'release)))
+               (begin (mutex 'release) (the-sem 'acquire)))
+             (mutex 'release))
             ((eq? m 'release)
              (mutex 'acquire)
              (set! taken (- taken 1))
@@ -1184,4 +1184,154 @@
   (cons-stream 1 (integrate-series (scale-stream sine-series -1))))
 ; ...maths
 
+; 3.63
+(define (sqrt-stream x)
+  (define guesses
+    (cons-stream 1.0
+                 (stream-map (lambda (guess)
+                               (sqrt-improve guess x))
+                             guesses)))
+  guesses)
+; ^ orig vs. LR's version:
+(define (sqrt-stream x)
+  (cons-stream 1.0
+               (stream-map (lambda (guess)
+                             (sqrt-improve guess x))
+                           (sqrt-stream x))))
+; The latter will always start at the beginning of the chain for each calculation,
+; so has to work its way from 1 to the nth guess to get the n+1'th guess instead
+; of it being already-calculated. Kind of like a non-memo'd fib calculation.
+; Without the memo-ing the two approaches would be the same.
 
+; 3.64
+(define (stream-limit stream tolerance)
+  (define (iter s last)
+    (let ((next (stream-car s)))
+      (if (>= tolerance (abs (- last next)))
+        next
+        (iter (stream-cdr s) next))))
+  (iter (stream-cdr stream) (stream-car stream)))
+
+; non-iterative version
+(define (stream-limit stream tolerance)
+  (let ((first (stream-ref stream 0))
+        (second (stream-ref stream 1)))
+    (if (>= tolerance (abs (- first second)))
+      second
+      (stream-limit (stream-cdr stream) tolerance))))
+
+(define ones (cons-stream 1 ones))
+(define integers (cons-stream 1 (add-streams ones integers)))
+(define (interleave s1 s2)
+  (if (stream-null? s1)
+    s2
+    (cons-stream (stream-car s1)
+                 (interleave s2 (stream-cdr s1)))))
+
+; 3.67
+(define (pairs s t)
+  (cons-stream
+    (list (stream-car s) (stream-car t))
+    (interleave
+      (interleave
+        (stream-map (lambda (x) (list (stream-car s) x))
+                    (stream-cdr t))
+        (stream-map (lambda (x) (list (stream-car t) x))
+                    (stream-cdr s)))
+      (pairs (stream-cdr s) (stream-cdr t)))))
+
+; 3.68
+; No. It doesn't handle the t stream correctly, we'll have missing values
+
+; 3.69
+(define (triples s t u)
+  (cons-stream
+    (list (stream-car s) (stream-car t) (stream-car u))
+    (interleave
+      (stream-map (lambda (x) (list (stream-car s) x))
+                  (stream-cdr (pairs t u)))
+      (triples (stream-cdr s) (stream-cdr t) (stream-cdr u)))))
+(define (pythag-trips)
+  (define (is-triple? x)
+    (let ((a (car x)) (b (cadr x)) (c (caddr x)))
+      (eq? (+ (square a)
+              (square b))
+           (square c))))
+  (let ((trips (triples integers integers integers)))
+    (stream-filter is-triple? trips)))
+
+; 3.70
+(define (merge-weighted s1 s2 weight)
+  (cond ((stream-null? s1) s2)
+        ((stream-null? s2) s1)
+        (else
+          (let ((s1car (stream-car s1))
+                (s2car (stream-car s2)))
+            (cond ((< (weight s1car) (weight s2car))
+                   (cons-stream s1car (merge (stream-cdr s1) s2)))
+                  ((> (weight s1car) (weight s2car))
+                   (cons-stream s2car (merge s1 (stream-cdr s2))))
+                  (else
+                    (cons-stream s1car
+                                 (merge (stream-cdr s1)
+                                        (stream-cdr s2)))))))))
+
+(define (weighted-pairs s t w)
+  (cons-stream
+    (list (stream-car s) (stream-car t))
+    (merge-weighted
+      (stream-map (lambda (x) (list (stream-car s) x))
+                  (stream-cdr t))
+      (weighted-pairs (stream-cdr s) (stream-cdr t) w)
+      w)))
+
+; a
+(define (all-positive-pairs)
+  (weighted-pairs integers integers (lambda (x)
+                                      (+ (car x) (cadr x)))))
+
+; b
+(define (filtered-positive-pairs)
+  (define (div-by? x y)
+    (= (remainder x y) 0))
+  (define filtered-stream (stream-filter (lambda (x)
+                                           (not (or (div-by? x 2)
+                                                    (div-by? x 3)
+                                                    (div-by? x 5))))
+                                         integers))
+  (weighted-pairs filtered-stream filtered-stream (lambda (x)
+                                                    (+ (* 2 (car x))
+                                                       (* 3 (cadr x))
+                                                       (* 5 (car x) (cadr x))))))
+
+; 3.71
+; n.b. 1729 = 1^3 + 12^3 = 9^3 + 10^3
+(define (ramnums)
+  (define (addcubes x) (let ((i (car x))
+                             (j (cadr x)))
+                         (+ (* i i i)
+                            (* j j j))))
+  (define unfiltered-stream (weighted-pairs integers integers addcubes))
+  (define (iter s)
+    (let ((first (addcubes (stream-ref s 0)))
+          (second (addcubes (stream-ref s 1))))
+      (if (= first second)
+        (stream-cons first (iter (stream-cdr s)))
+        (iter (stream-cdr s)))))
+  (iter unfiltered-stream))
+
+; 3.72
+(define (triple-squares)
+  (define (weight x) (let ((i (car x))
+                           (j (cadr x)))
+                       (+ (* i i)
+                          (* j j))))
+  (define unfiltered-stream (weighted-pairs integers integers weight))
+  (define (iter s)
+    (let ((first (weight (stream-ref s 0)))
+          (second (weight (stream-ref s 1)))
+          (third (weight (stream-ref s 2))))
+      (if (= first second third)
+        (stream-cons first (iter (stream-cdr s)))
+        (iter (stream-cdr s)))))
+  (iter unfiltered-stream))
