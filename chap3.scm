@@ -1335,3 +1335,51 @@
         (stream-cons first (iter (stream-cdr s)))
         (iter (stream-cdr s)))))
   (iter unfiltered-stream))
+
+(define (integral integrand initial-value dt)
+  (define int
+    (cons-stream initial-value
+                 (add-streams (scale-stream integrand dt)
+                              int)))
+  int)
+; 3.73
+(define (RC r c dt)
+  (lambda (i v0)
+    (add-streams (scale-stream i r)
+                 (integral (scale-stream i (/ 1 c))
+                           v0
+                           dt))))
+
+; 3.74
+(define zero-crossings
+  (stream-map sign-change-detector sense-data (cons-stream 0 sense-data)))
+
+; 3.75
+; Compare current average with previous average, but generate averages
+; from real values, not averaged ones
+(define (make-zero-crossings input-stream last-value last-avpt)
+  (let ((avpt (/ (+ (stream-car input-stream) last-value) 2)))
+    (cons-stream (sign-change-detector avpt last-avpt)
+                 (make-zero-crossings (stream-cdr input-stream)
+                                      (stream-car input-stream)
+                                      avpt))))
+
+; 3.76
+(define (smooth s)
+  (stream-map (lambda (x y) (/ (+ x y) 2))
+              s
+              (cons-stream (stream-car s) s)))
+(define zero-crossings
+  (let ((smoothed (smooth sense-data)))
+  (stream-map sign-change-detector smoothed (cons-stream 0 smoothed))))
+
+; 3.77
+(define (integral delayed-integrand initial-value dt)
+  (cons-stream initial-value
+               (let ((integrand (force delayed-integrand)))
+                 (if (stream-null? integrand)
+                   the-empty-stream
+                   (integral (delay (stream-cdr integrand))
+                             (+ (* dt (stream-car integrand))
+                                initial-value)
+                             dt)))))
