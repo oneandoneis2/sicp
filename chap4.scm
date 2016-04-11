@@ -78,3 +78,37 @@
         (if res
           res
           (eval-or (rest-exps exps) env))))))
+
+; 4.5
+; This means evaluating the predicate twice, but can't avoid this yet as we don't
+; have 'let' in our evaluator to store data :(
+(define (cond=>? clause)
+  (eq? '=> (cadr clause)))
+(define (cond=>fun clause)
+  (caddr clause))
+(define (expand-clauses clauses)
+  (if (null? clauses)
+    'false                          ; no else clause
+    (let ((first (car clauses))
+          (rest (cdr clauses)))
+      (if (cond-else-clause? first)
+        (if (null? rest)
+          (sequence->exp (cond-actions first))
+          (error "ELSE clause isn't last -- COND->IF" clauses))
+        (make-if (cond-predicate first)
+                 (if (cond=>? first)
+                   (list (cond=>fun first) (cond-predicate first))
+                   (sequence->exp (cond-actions first)))
+                 (expand-clauses rest))))))
+
+; 4.6
+(define (let? exp) (tagged-list? exp 'let))
+(define (let-vars exp)
+  (let ((let-list (cadr exp)))
+    (map car let-list)))
+(define (let-vals exp)
+  (let ((let-list (cadr exp)))
+    (map cadr let-list)))
+(define (let-body exp) (cddr exp))
+(define (let->lambda exp)
+  `((lambda ,(let-vars exp) ,@(let-body exp)) ,@(let-vals exp)))
