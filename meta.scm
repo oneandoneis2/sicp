@@ -181,11 +181,6 @@
           res
           (eval-or (rest-exps exps) env))))))
 
-(define (true? x)
-    (not (eq? x false)))
-(define (false? x)
-    (eq? x false))
-
 (define (let? exp) (tagged-list? exp 'let))
 (define (let-binds exp) (cadr exp))
 (define (let-vars exp) (map car (cadr exp)))
