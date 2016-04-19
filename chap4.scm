@@ -112,3 +112,9 @@
 (define (let-body exp) (cddr exp))
 (define (let->lambda exp)
   `((lambda ,(let-vars exp) ,@(let-body exp)) ,@(let-vals exp)))
+
+; Mostly doing stuff in the meta file instead now. Easier.
+; 4.14
+; the function param to map in the circ. is actually '(primitive <the + function>)
+; if we write map, it will correctly handle the primitive.
+; If we import it, it'll blow up about being passed a list instead of a function
