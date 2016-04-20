@@ -118,3 +118,7 @@
 ; the function param to map in the circ. is actually '(primitive <the + function>)
 ; if we write map, it will correctly handle the primitive.
 ; If we import it, it'll blow up about being passed a list instead of a function
+;
+; 4.15
+; You can't prove a negative - halt? could only work by running the procedure and waiting
+; You can't distinguish between "hasn't returned yet" and "will never return"

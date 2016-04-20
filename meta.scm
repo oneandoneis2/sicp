@@ -239,7 +239,7 @@
   (eq? x false))
 
 (define (make-procedure parameters body env)
-  (list 'procedure parameters body env))
+  (list 'procedure parameters (scan-out-defines body) env))
 (define (compound-procedure? p)
   (tagged-list? p 'procedure))
 (define (procedure-parameters p) (cadr p))
@@ -282,7 +282,10 @@
 (define (lookup-variable-value var env)
   (let ((frame (frame-for-var var env)))
     (if frame
-      (cdr (var-in-frame? var frame))
+      (let ((val (cdr (var-in-frame? var frame))))
+        (if (eq? val '*unassigned*)
+          (error "value has not yet been assigned" var)
+          val))
       (error "Unbound variable" var))))
 
 (define (set-variable-value! var val env)
@@ -301,12 +304,13 @@
 (define primitive-procedures
   (list (list 'car car)
         (list 'cdr cdr)
+        (list 'list list)
+        (list 'cons cons)
+        (list 'null? null?)
         (list '+ +)
         (list '- -)
         (list '* *)
         (list '/ /)
-        (list 'cons cons)
-        (list 'null? null?)
         ;<more primitives>
         ))
 
@@ -358,6 +362,24 @@
                    (procedure-body object)
                    '<procedure-env>))
     (display object)))
+
+(define (scan-out-defines body)
+  (define (has-defines? body)
+    (if (pair? body)
+      (or (map definition? body))
+      #f))
+  (define (defs2letvars body)
+    (map (lambda (x) (list x '*unassigned*))
+         (map definition-variable
+              (filter definition? body))))
+  (define (defs2sets body)
+    (map (lambda (x) (cons 'set! (cdr x)))
+         (filter definition? body)))
+  (define (deflessBody body)
+    (filter (lambda (x) (not (definition? x))) body))
+  (if (has-defines? body)
+    `(let ,(defs2letvars body) ,@(defs2sets body) ,@(deflessBody body))
+    body))
 
 (define the-global-environment (setup-environment))
 (driver-loop)
