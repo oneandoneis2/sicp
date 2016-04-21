@@ -81,7 +81,7 @@
     false))
 
 (define (assignment? exp)
-  (tagged-list? exp 'set))
+  (tagged-list? exp 'set!))
 (define (assignment-variable exp) (cadr exp))
 (define (assignment-value exp) (caddr exp))
 
@@ -117,7 +117,7 @@
 (define (begin-actions exp) (cdr exp))
 (define (last-exp? seq) (null? (cdr seq)))
 (define (first-exp seq) (car seq))
-(define (rest-exp seq) (cdr seq))
+(define (rest-exps seq) (cdr seq))
 
 (define (sequence->exp seq)
   (cond ((null? seq) seq)
@@ -364,12 +364,11 @@
     (display object)))
 
 (define (scan-out-defines body)
+  (define (id x) x)
   (define (has-defines? body)
-    (if (pair? body)
-      (or (map definition? body))
-      #f))
+    (not (null? (filter id (map definition? body)))))
   (define (defs2letvars body)
-    (map (lambda (x) (list x '*unassigned*))
+    (map (lambda (x) (list x ''*unassigned*))
          (map definition-variable
               (filter definition? body))))
   (define (defs2sets body)
@@ -378,7 +377,7 @@
   (define (deflessBody body)
     (filter (lambda (x) (not (definition? x))) body))
   (if (has-defines? body)
-    `(let ,(defs2letvars body) ,@(defs2sets body) ,@(deflessBody body))
+    (list `(let ,(defs2letvars body) ,@(defs2sets body) ,@(deflessBody body)))
     body))
 
 (define the-global-environment (setup-environment))
