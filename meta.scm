@@ -16,6 +16,7 @@
          (eval-sequence (begin-actions exp) env))
         ((let? exp) (myeval (let->combination exp) env))
         ((let*? exp) (myeval (let*->nested-lets exp) env))
+        ((letrec? exp) (myeval (letrec->recursive-lets exp) env))
         ((while? exp) (myeval (while->combination exp) env))
         ((application? exp)
          (myapply (myeval (operator exp) env)
@@ -311,6 +312,7 @@
         (list '- -)
         (list '* *)
         (list '/ /)
+        (list '= =)
         ;<more primitives>
         ))
 
@@ -368,7 +370,7 @@
   (define (has-defines? body)
     (not (null? (filter id (map definition? body)))))
   (define (defs2letvars body)
-    (map (lambda (x) (list x ''*unassigned*))
+    (map unassigned-arg
          (map definition-variable
               (filter definition? body))))
   (define (defs2sets body)
@@ -379,6 +381,17 @@
   (if (has-defines? body)
     (list `(let ,(defs2letvars body) ,@(defs2sets body) ,@(deflessBody body)))
     body))
+
+(define (unassigned-arg x) (list x ''*unassigned*))
+(define (letrec? exp) (tagged-list? exp 'letrec))
+(define (letrec-list->set exp) (map (lambda (l) (cons 'set! l)) (cadr exp)))
+(define (letrec-args exp) (map car (cadr exp)))
+(define (letrec-body exp) (cddr exp))
+
+(define (letrec->recursive-lets exp)
+  `(let ,(map unassigned-arg (letrec-args exp))
+     ,@(letrec-list->set exp)
+     ,@(letrec-body exp)))
 
 (define the-global-environment (setup-environment))
 (driver-loop)
