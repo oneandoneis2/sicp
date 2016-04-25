@@ -122,3 +122,22 @@
 ; 4.15
 ; You can't prove a negative - halt? could only work by running the procedure and waiting
 ; You can't distinguish between "hasn't returned yet" and "will never return"
+;
+; 4.21 a: Anonymous fib function:
+(lambda (n)
+  ((lambda (fn)
+     (fn fn n))
+   (lambda (fn num)
+     (if (< num 2)
+       num
+       (+ (fn fn (- num 1)) (fn fn (- num 2)))))))
+
+; b: Fill in blanks:
+(define (f x)
+  ((lambda (even? odd?)
+     (even? even? odd? x))
+   (lambda (ev? od? n)
+     (if (= n 0) true (od? ev? od? (- n 1))))
+   (lambda (ev? od? n)
+     (if (= n 0) false (ev? ev? od? (- n 1))))))
+
