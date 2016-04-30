@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 
 # The SICP evaluator, in Perl
+use feature 'say';
 
 sub myeval {
     my ($exp, $env) = @_;
@@ -41,5 +42,44 @@ sub apply {
     }
     else {
         error("Unknown procedure type -- APPLY", $procedure)
+    }
+}
+
+sub list_of_values {
+    my ($exps, $env) = @_;
+
+    if (is_no_operands $exps) {
+        undef
+    }
+    else {
+        cons(
+            myeval( first_operand($exps), $env ),
+            list_of_values( rest_operands($exps), $env)
+            )
+    }
+}
+
+sub cons {
+    my ($head, $tail) = @_;
+    return sub { my $op = shift; $op->( $head, $tail ) }
+}
+
+sub car {
+    my $cons = shift;
+    return $cons->( sub { my ($head, $tail) = @_; return $head } )
+}
+
+sub cdr {
+    my $cons = shift;
+    return $cons->( sub { my ($head, $tail) = @_; return $tail } )
+}
+
+sub list {
+    if (@_) {
+        my ($head, @tail) = @_;
+        cons( $head, list(@tail) )
+    }
+    else {
+        undef
     }
 }
