@@ -59,19 +59,47 @@ sub list_of_values {
     }
 }
 
+# To have typed data, use hashrefs with key as type & value as value
+sub true { return { bool => 'true' } }
+sub false { return { bool => 'false' } }
+sub nil { return { nil => 1 } }
+sub is_symbol {
+    my $exp = shift;
+    if ( defined $exp->{symbol} ) { true() }
+    else { false() }
+}
+sub is_number {
+    my $exp = shift;
+    if ( defined $exp->{num} ) { true() }
+    else { false() }
+}
+sub is_string {
+    my $exp = shift;
+    if ( defined $exp->{string} ) { true() }
+    else { false() }
+}
+sub is_cons {
+    my $exp = shift;
+    if ( defined $exp->{cons} ) { true() }
+    else { false() }
+}
+sub symbol { return { symbol => shift } }
+
 sub cons {
     my ($head, $tail) = @_;
-    return sub { my $op = shift; $op->( $head, $tail ) }
+    return {
+        cons => sub { my $op = shift; $op->( $head, $tail ) }
+    }
 }
 
 sub car {
     my $cons = shift;
-    return $cons->( sub { my ($head, $tail) = @_; return $head } )
+    return $cons->{cons}( sub { my ($head, $tail) = @_; return $head } )
 }
 
 sub cdr {
     my $cons = shift;
-    return $cons->( sub { my ($head, $tail) = @_; return $tail } )
+    return $cons->{cons}( sub { my ($head, $tail) = @_; return $tail } )
 }
 
 sub list {
@@ -80,6 +108,68 @@ sub list {
         cons( $head, list(@tail) )
     }
     else {
-        undef
+        nil()
     }
 }
+
+sub eval_if {
+    my ($exp, $env) = @_;
+    if ( is_true( myeval( if_predicate($exp), $env ) ) ) {
+        myeval( if_consequent($exp), $env )
+    }
+    else {
+        myeval( if_alternative($exp), $env )
+    }
+}
+
+sub eval_sequence {
+    my ($exps, $env) = @_;
+    if ( is_last_exp($exps) ) {
+        myeval( first_exp($exps), $env)
+    }
+    else {
+        myeval( first_exp($exps), $env);
+        eval_sequence( rest_exps($exps), $env )
+    }
+}
+
+sub eval_assignment {
+    my ($exp, $env) = @_;
+    set_variable_value(
+        assignment_variable($exp),
+        myeval( assignment_value($exp), $env ),
+        $env
+    );
+    'ok'
+}
+
+sub eval_definition {
+    my ($exp, $env) = @_;
+    define_variable
+        variable_variable($exp),
+        myeval( variable_value($exp), $env ),
+        $env
+    );
+    'ok'
+}
+
+sub is_self_evaluating {
+    my $exp = shift;
+    if (is_number $exp || is_string $exp) {
+        true()
+    }
+    else {
+        false()
+    }
+}
+
+sub is_variable {
+    my $exp = shift;
+    is_symbol($exp)
+}
+
+sub is_quoted {
+    my $exp = shift;
+    is_tagged_list($exp, symbol('quote') )
+}
+
