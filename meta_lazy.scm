@@ -41,7 +41,7 @@
           (error "Unknown procedure type -- APPLY" procedure))))
 
 (define (actual-value exp env)
-  (force-it (eval exp env)))
+  (force-it (myeval exp env)))
 
 (define (list-of-arg-values exps env)
   (if (no-operands? exps)
