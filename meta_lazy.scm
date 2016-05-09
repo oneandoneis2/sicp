@@ -90,7 +90,7 @@
 
 (define (eval-sequence exps env)
   (cond ((last-exp? exps) (myeval (first-exp exps) env))
-        (else (myeval (first-exp exps) env)
+        (else (actual-value (first-exp exps) env)
               (eval-sequence (rest-exps exps) env))))
 
 (define (eval-assignment exp env)
