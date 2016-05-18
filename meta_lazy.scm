@@ -114,7 +114,20 @@
 (define (variable? exp) (symbol? exp))
 
 (define (quoted? exp) (tagged-list? exp 'quote))
-(define (text-of-quotation exp) (cadr exp))
+(define (text-of-quotation exp)
+  (define (make-list items)
+    (if (null? items)
+      '()
+      (make-procedure
+        '(m)
+        (list (list 'm 'x 'y))
+        (extend-environment (list 'x 'y)
+                            (list (car items) (make-list (cdr items)))
+                            the-empty-environment))))
+  (let ((q (cadr exp)))
+    (if (pair? q)
+      (make-list q)
+      q)))
 
 (define (tagged-list? exp tag)
   (if (pair? exp)
