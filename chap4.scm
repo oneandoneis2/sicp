@@ -229,3 +229,32 @@
                 (floors)))
          (floors))
     results))
+
+; 4.43
+(define (father-of-lorna)
+  (define (names) (amb 'Lorna 'Melissa 'Rosalind 'Gabrielle 'MaryAnne))
+  (define daughter car)
+  (define yacht cadr)
+  (let ((Moore (list 'MaryAnne 'Lorna))
+        (Barnacle (list 'Melissa 'Gabrielle))
+        (Downing (list names 'Melissa))
+        (Hall (list names 'Rosalind))
+        (Parker (list names 'Parker)))
+    (require (distinct? Downing))   ; yacht can't have same name as daughter
+    (require (distinct? Hall))
+    (require (distinct? Parker))
+    (require (not (eq? (daughter Parker) 'Gabrielle)))
+    (require (not (eq? (daughter Hall) 'Rosalind)))
+    ; Gabrielle's father owns the yacht that is named after Dr. Parker's daughter
+    ; Her father can only be Downing or Hall
+    (require (cond ((eq? (daughter Hall) 'Gabrielle) (eq? (yacht Hall) (daughter Parker)))
+                   ((eq? (daughter Downing) 'Gabrielle) (eq? (yacht Downing) (daughter Parker)))
+                   #f))
+    ; And now we can't share any names for daughters or yachts
+    (require (distinct? (map daughter (list Moore Barnacle Downing Hall Parker))))
+    (require (distinct? (map yacht (list Moore Barnacle Downing Hall Parker))))
+    (list (list 'Moore Moore)
+          (list 'Barnacle Barnacle)
+          (list 'Downing Downing)
+          (list 'Hall Hall)
+          (list 'Parker Parker))))
