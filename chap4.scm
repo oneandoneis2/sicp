@@ -193,6 +193,7 @@
 ; 4.41
 ; Fuck elegance, we're going to brute-force all the things!
 (define (brute-multiple-dwelling)
+  (define (floors) (list 1 2 3 4 5))
   (define (adjacent? x y)
     (= (abs (- x y)) 1))
   (define (valid? baker cooper fletcher miller smith)
@@ -222,9 +223,9 @@
                                                              (list 'miller miller)
                                                              (list 'smith smith)))
                                          '()))
-                                     (list 1 2 3 4 5)))
-                              (list 1 2 3 4 5)))
-                       (list 1 2 3 4 5)))
-                (list 1 2 3 4 5)))
-         (list 1 2 3 4 5))
+                                     (floors)))
+                              (floors)))
+                       (floors)))
+                (floors)))
+         (floors))
     results))
