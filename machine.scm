@@ -119,13 +119,17 @@
        (lambda (insts labels)
          (let ((next-inst (car text)))
            (if (symbol? next-inst)
+             (if (label-present? next-inst labels)
+               (error "Label defined twice -- " next-inst)
                (receive insts
                         (cons (make-label-entry next-inst
                                                 insts)
-                              labels))
+                              labels)))
                (receive (cons (make-instruction next-inst)
                               insts)
                         labels)))))))
+
+(define label-present? assoc)
 
 (define (update-insts! insts labels machine)
   (let ((pc (get-register machine 'pc))
