@@ -179,8 +179,20 @@
          (make-restore inst machine stack pc))
         ((eq? (car inst) 'perform)
          (make-perform inst machine labels ops pc))
+        ((eq? (car inst) 'increment)
+         (make-increment inst machine pc))
         (else (error "Unknown instruction type -- ASSEMBLE"
                      inst))))
+
+(define (make-increment inst machine pc)
+  (let ((reg
+          (get-register machine (inc-reg-name inst))))
+    (lambda ()
+      (set-contents! reg (+ 1 (get-contents reg)))
+      (advance-pc pc))))
+
+(define (inc-reg-name inc-instruction)
+  (cadr inc-instruction))
 
 (define (make-assign inst machine labels operations pc)
   (let ((target
