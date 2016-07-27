@@ -264,14 +264,17 @@
   (let ((reg (get-register machine
                            (stack-inst-reg-name inst))))
     (lambda ()
-      (push stack (get-contents reg))
+      (push stack (cons (stack-inst-reg-name inst) (get-contents reg)))
       (advance-pc pc))))
 (define (make-restore inst machine stack pc)
   (let ((reg (get-register machine
                            (stack-inst-reg-name inst))))
     (lambda ()
-      (set-contents! reg (pop stack))    
-      (advance-pc pc))))
+      (let ((val (pop stack)))
+        (if (eq? (stack-inst-reg-name inst) (car val))
+          (begin (set-contents! reg (cdr val))
+                 (advance-pc pc))
+          (error "Wrong stack specified to restore -- " (car val)))))))
 (define (stack-inst-reg-name stack-instruction)
   (cadr stack-instruction))
 
