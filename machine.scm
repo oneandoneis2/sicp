@@ -3,7 +3,7 @@
     (for-each (lambda (register-name)
                 ((machine 'allocate-register) register-name))
               register-names)
-    ((machine 'install-operations) ops)    
+    ((machine 'install-operations) ops)
     ((machine 'install-instruction-sequence)
      (assemble controller-text machine))
     machine))
@@ -15,7 +15,7 @@
             ((eq? message 'set)
              (lambda (value) (set! contents value)))
             (else
-             (error "Unknown request -- REGISTER" message))))
+              (error "Unknown request -- REGISTER" message))))
     dispatch))
 
 (define (get-contents register)
@@ -30,10 +30,10 @@
       (set! s (cons x s)))
     (define (pop)
       (if (null? s)
-          (error "Empty stack -- POP")
-          (let ((top (car s)))
-            (set! s (cdr s))
-            top)))
+        (error "Empty stack -- POP")
+        (let ((top (car s)))
+          (set! s (cdr s))
+          top)))
     (define (initialize)
       (set! s '())
       'done)
@@ -57,29 +57,29 @@
         (stack (make-stack))
         (the-instruction-sequence '()))
     (let ((the-ops
-           (list (list 'initialize-stack
-                       (lambda () (stack 'initialize)))))
+            (list (list 'initialize-stack
+                        (lambda () (stack 'initialize)))))
           (register-table
-           (list (list 'pc pc) (list 'flag flag))))
+            (list (list 'pc pc) (list 'flag flag))))
       (define (allocate-register name)
         (if (assoc name register-table)
-            (error "Multiply defined register: " name)
-            (set! register-table
-                  (cons (list name (make-register name))
-                        register-table)))
+          (error "Multiply defined register: " name)
+          (set! register-table
+            (cons (list name (make-register name))
+                  register-table)))
         'register-allocated)
       (define (lookup-register name)
         (let ((val (assoc name register-table)))
           (if val
-              (cadr val)
-              (error "Unknown register:" name))))
+            (cadr val)
+            (error "Unknown register:" name))))
       (define (execute)
         (let ((insts (get-contents pc)))
           (if (null? insts)
-              'done
-              (begin
-                ((instruction-execution-proc (car insts)))
-                (execute)))))
+            'done
+            (begin
+              ((instruction-execution-proc (car insts)))
+              (execute)))))
       (define (dispatch message)
         (cond ((eq? message 'start)
                (set-contents! pc the-instruction-sequence)
@@ -108,26 +108,26 @@
 
 (define (assemble controller-text machine)
   (extract-labels controller-text
-    (lambda (insts labels)
-      (update-insts! insts labels machine)
-      insts)))
+                  (lambda (insts labels)
+                    (update-insts! insts labels machine)
+                    insts)))
 
 (define (extract-labels text receive)
   (if (null? text)
-      (receive '() '())
-      (extract-labels (cdr text)
-       (lambda (insts labels)
-         (let ((next-inst (car text)))
-           (if (symbol? next-inst)
-             (if (label-present? next-inst labels)
-               (error "Label defined twice -- " next-inst)
-               (receive insts
-                        (cons (make-label-entry next-inst
-                                                insts)
-                              labels)))
-               (receive (cons (make-instruction next-inst)
-                              insts)
-                        labels)))))))
+    (receive '() '())
+    (extract-labels (cdr text)
+                    (lambda (insts labels)
+                      (let ((next-inst (car text)))
+                        (if (symbol? next-inst)
+                          (if (label-present? next-inst labels)
+                            (error "Label defined twice -- " next-inst)
+                            (receive insts
+                                     (cons (make-label-entry next-inst
+                                                             insts)
+                                           labels)))
+                          (receive (cons (make-instruction next-inst)
+                                         insts)
+                                   labels)))))))
 
 (define label-present? assoc)
 
@@ -137,13 +137,13 @@
         (stack (machine 'stack))
         (ops (machine 'operations)))
     (for-each
-     (lambda (inst)
-       (set-instruction-execution-proc! 
-        inst
-        (make-execution-procedure
-         (instruction-text inst) labels machine
-         pc flag stack ops)))
-     insts)))
+      (lambda (inst)
+        (set-instruction-execution-proc!
+          inst
+          (make-execution-procedure
+            (instruction-text inst) labels machine
+            pc flag stack ops)))
+      insts)))
 
 (define (make-instruction text)
   (cons text '()))
@@ -160,8 +160,8 @@
 (define (lookup-label labels label-name)
   (let ((val (assoc label-name labels)))
     (if val
-        (cdr val)
-        (error "Undefined label -- ASSEMBLE" label-name))))
+      (cdr val)
+      (error "Undefined label -- ASSEMBLE" label-name))))
 
 (define (make-execution-procedure inst labels machine
                                   pc flag stack ops)
@@ -196,13 +196,13 @@
 
 (define (make-assign inst machine labels operations pc)
   (let ((target
-         (get-register machine (assign-reg-name inst)))
+          (get-register machine (assign-reg-name inst)))
         (value-exp (assign-value-exp inst)))
     (let ((value-proc
-           (if (operation-exp? value-exp)
-               (make-operation-exp
+            (if (operation-exp? value-exp)
+              (make-operation-exp
                 value-exp machine labels operations)
-               (make-primitive-exp
+              (make-primitive-exp
                 (car value-exp) machine labels))))
       (lambda ()                ; execution procedure for assign
         (set-contents! target (value-proc))
@@ -219,26 +219,26 @@
 (define (make-test inst machine labels operations flag pc)
   (let ((condition (test-condition inst)))
     (if (operation-exp? condition)
-        (let ((condition-proc
-               (make-operation-exp
+      (let ((condition-proc
+              (make-operation-exp
                 condition machine labels operations)))
-          (lambda ()
-            (set-contents! flag (condition-proc))
-            (advance-pc pc)))
-        (error "Bad TEST instruction -- ASSEMBLE" inst))))
+        (lambda ()
+          (set-contents! flag (condition-proc))
+          (advance-pc pc)))
+      (error "Bad TEST instruction -- ASSEMBLE" inst))))
 (define (test-condition test-instruction)
   (cdr test-instruction))
 
 (define (make-branch inst machine labels flag pc)
   (let ((dest (branch-dest inst)))
     (if (label-exp? dest)
-        (let ((insts
-               (lookup-label labels (label-exp-label dest))))
-          (lambda ()
-            (if (get-contents flag)
-                (set-contents! pc insts)
-                (advance-pc pc))))
-        (error "Bad BRANCH instruction -- ASSEMBLE" inst))))
+      (let ((insts
+              (lookup-label labels (label-exp-label dest))))
+        (lambda ()
+          (if (get-contents flag)
+            (set-contents! pc insts)
+            (advance-pc pc))))
+      (error "Bad BRANCH instruction -- ASSEMBLE" inst))))
 (define (branch-dest branch-instruction)
   (cadr branch-instruction))
 
@@ -246,13 +246,13 @@
   (let ((dest (goto-dest inst)))
     (cond ((label-exp? dest)
            (let ((insts
-                  (lookup-label labels
-                                (label-exp-label dest))))
+                   (lookup-label labels
+                                 (label-exp-label dest))))
              (lambda () (set-contents! pc insts))))
           ((register-exp? dest)
            (let ((reg
-                  (get-register machine
-                                (register-exp-reg dest))))
+                   (get-register machine
+                                 (register-exp-reg dest))))
              (lambda ()
                (set-contents! pc (get-contents reg)))))
           (else (error "Bad GOTO instruction -- ASSEMBLE"
@@ -264,30 +264,27 @@
   (let ((reg (get-register machine
                            (stack-inst-reg-name inst))))
     (lambda ()
-      (push stack (cons (stack-inst-reg-name inst) (get-contents reg)))
+      (push stack (get-contents reg))
       (advance-pc pc))))
 (define (make-restore inst machine stack pc)
   (let ((reg (get-register machine
                            (stack-inst-reg-name inst))))
     (lambda ()
-      (let ((val (pop stack)))
-        (if (eq? (stack-inst-reg-name inst) (car val))
-          (begin (set-contents! reg (cdr val))
-                 (advance-pc pc))
-          (error "Wrong stack specified to restore -- " (car val)))))))
+      (set-contents! reg (pop stack))
+      (advance-pc pc))))
 (define (stack-inst-reg-name stack-instruction)
   (cadr stack-instruction))
 
 (define (make-perform inst machine labels operations pc)
   (let ((action (perform-action inst)))
     (if (operation-exp? action)
-        (let ((action-proc
-               (make-operation-exp
+      (let ((action-proc
+              (make-operation-exp
                 action machine labels operations)))
-          (lambda ()
-            (action-proc)
-            (advance-pc pc)))
-        (error "Bad PERFORM instruction -- ASSEMBLE" inst))))
+        (lambda ()
+          (action-proc)
+          (advance-pc pc)))
+      (error "Bad PERFORM instruction -- ASSEMBLE" inst))))
 (define (perform-action inst) (cdr inst))
 
 (define (make-primitive-exp exp machine labels)
@@ -296,15 +293,15 @@
            (lambda () c)))
         ((label-exp? exp)
          (let ((insts
-                (lookup-label labels
-                              (label-exp-label exp))))
+                 (lookup-label labels
+                               (label-exp-label exp))))
            (lambda () insts)))
         ((register-exp? exp)
          (let ((r (get-register machine
                                 (register-exp-reg exp))))
            (lambda () (get-contents r))))
         (else
-         (error "Unknown expression type -- ASSEMBLE" exp))))
+          (error "Unknown expression type -- ASSEMBLE" exp))))
 
 (define (register-exp? exp) (tagged-list? exp 'reg))
 (define (register-exp-reg exp) (cadr exp))
@@ -316,9 +313,9 @@
 (define (make-operation-exp exp machine labels operations)
   (let ((op (lookup-prim (operation-exp-op exp) operations))
         (aprocs
-         (map (lambda (e)
-                (make-primitive-exp e machine labels))
-              (operation-exp-operands exp))))
+          (map (lambda (e)
+                 (make-primitive-exp e machine labels))
+               (operation-exp-operands exp))))
     (lambda ()
       (apply op (map (lambda (p) (p)) aprocs)))))
 
@@ -332,8 +329,8 @@
 (define (lookup-prim symbol operations)
   (let ((val (assoc symbol operations)))
     (if val
-        (cadr val)
-        (error "Unknown operation -- ASSEMBLE" symbol))))
+      (cadr val)
+      (error "Unknown operation -- ASSEMBLE" symbol))))
 
 (define (tagged-list? exp tag)
   (if (pair? exp)
