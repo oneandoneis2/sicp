@@ -45,8 +45,7 @@
       (set! current-depth 0)
       'done)
     (define (print-statistics)
-      (newline)
-      (display (list 'total-pushes  '= number-pushes
+      (printout (list 'total-pushes  '= number-pushes
                      'maximum-depth '= max-depth)))
     (define (dispatch message)
       (cond ((eq? message 'push) push)
@@ -99,8 +98,7 @@
               ((instruction-execution-proc (car insts)))
               (execute)))))
       (define (exec-print-and-reset)
-        (newline)
-        (display exec-count)
+        (printout exec-count)
         (set! exec-count 0))
       (define (dispatch message)
         (cond ((eq? message 'start)
@@ -358,3 +356,7 @@
   (if (pair? exp)
     (eq? (car exp) tag)
     false))
+
+(define (printout x)
+  (newline)
+  (display x))
