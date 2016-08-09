@@ -117,6 +117,7 @@
               ((eq? message 'reset-exec) (exec-print-and-reset))
               ((eq? message 'trace-on) (set! trace-inst #t))
               ((eq? message 'trace-off) (set! trace-inst #f))
+              ((eq? message 'showinst) (printout the-instruction-sequence))
               (else (error "Unknown request -- MACHINE" message))))
       dispatch)))
 
