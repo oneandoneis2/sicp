@@ -147,7 +147,8 @@
                         (if (symbol? next-inst)
                           (if (label-present? next-inst labels)
                             (error "Label defined twice -- " next-inst)
-                            (receive insts
+                            (receive (cons (make-label-inst next-inst)
+                                           insts)
                                      (cons (make-label-entry next-inst
                                                              insts)
                                            labels)))
@@ -180,6 +181,9 @@
 (define (set-instruction-execution-proc! inst proc)
   (set-cdr! inst proc))
 
+(define (make-label-inst text)
+  (cons (list 'label text) '()))
+
 (define (make-label-entry label-name insts)
   (cons label-name insts))
 
@@ -191,7 +195,9 @@
 
 (define (make-execution-procedure inst labels machine
                                   pc flag stack ops)
-  (cond ((eq? (car inst) 'assign)
+  (cond ((eq? (car inst) 'label)
+         (make-label-noop pc))
+        ((eq? (car inst) 'assign)
          (make-assign inst machine labels ops pc))
         ((eq? (car inst) 'test)
          (make-test inst machine labels ops flag pc))
@@ -351,6 +357,9 @@
   (cadr (car operation-exp)))
 (define (operation-exp-operands operation-exp)
   (cdr operation-exp))
+
+(define (make-label-noop pc)
+  (lambda () (advance-pc pc)))
 
 (define (lookup-prim symbol operations)
   (let ((val (assoc symbol operations)))
