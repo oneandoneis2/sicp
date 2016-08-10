@@ -69,6 +69,7 @@
         (stack (make-stack))
         (the-instruction-sequence '())
         (exec-count 0)
+        (last-label #f)
         (trace-inst #f))
     (let ((the-ops
             (list (list 'initialize-stack
@@ -103,6 +104,9 @@
       (define (exec-print-and-reset)
         (printout exec-count)
         (set! exec-count 0))
+      (define (advance-pc label pc)
+        (set! last-label label)
+        (set-contents! pc (cdr (get-contents pc))))
       (define (dispatch message)
         (cond ((eq? message 'start)
                (set-contents! pc the-instruction-sequence)
@@ -118,6 +122,7 @@
               ((eq? message 'trace-on) (set! trace-inst #t))
               ((eq? message 'trace-off) (set! trace-inst #f))
               ((eq? message 'showinst) (printout the-instruction-sequence))
+              ((eq? message 'advance-pc) advance-pc)
               (else (error "Unknown request -- MACHINE" message))))
       dispatch)))
 
@@ -196,7 +201,7 @@
 (define (make-execution-procedure inst labels machine
                                   pc flag stack ops)
   (cond ((eq? (car inst) 'label)
-         (make-label-noop pc))
+         (make-label-noop machine (cadr inst) pc))
         ((eq? (car inst) 'assign)
          (make-assign inst machine labels ops pc))
         ((eq? (car inst) 'test)
@@ -221,7 +226,7 @@
           (get-register machine (inc-reg-name inst))))
     (lambda ()
       (set-contents! reg (+ 1 (get-contents reg)))
-      (advance-pc pc))))
+      (advance-pc machine #f pc))))
 
 (define (inc-reg-name inc-instruction)
   (cadr inc-instruction))
@@ -238,15 +243,15 @@
                 (car value-exp) machine labels))))
       (lambda ()                ; execution procedure for assign
         (set-contents! target (value-proc))
-        (advance-pc pc)))))
+        (advance-pc machine #f pc)))))
 
 (define (assign-reg-name assign-instruction)
   (cadr assign-instruction))
 (define (assign-value-exp assign-instruction)
   (cddr assign-instruction))
 
-(define (advance-pc pc)
-  (set-contents! pc (cdr (get-contents pc))))
+(define (advance-pc machine label pc)
+  ((machine 'advance-pc) label pc))
 
 (define (make-test inst machine labels operations flag pc)
   (let ((condition (test-condition inst)))
@@ -256,7 +261,7 @@
                 condition machine labels operations)))
         (lambda ()
           (set-contents! flag (condition-proc))
-          (advance-pc pc)))
+          (advance-pc machine #f pc)))
       (error "Bad TEST instruction -- ASSEMBLE" inst))))
 (define (test-condition test-instruction)
   (cdr test-instruction))
@@ -269,7 +274,7 @@
         (lambda ()
           (if (get-contents flag)
             (set-contents! pc insts)
-            (advance-pc pc))))
+            (advance-pc machine #f pc))))
       (error "Bad BRANCH instruction -- ASSEMBLE" inst))))
 (define (branch-dest branch-instruction)
   (cadr branch-instruction))
@@ -297,13 +302,13 @@
                            (stack-inst-reg-name inst))))
     (lambda ()
       (push stack (get-contents reg))
-      (advance-pc pc))))
+      (advance-pc machine #f pc))))
 (define (make-restore inst machine stack pc)
   (let ((reg (get-register machine
                            (stack-inst-reg-name inst))))
     (lambda ()
       (set-contents! reg (pop stack))
-      (advance-pc pc))))
+      (advance-pc machine #f pc))))
 (define (stack-inst-reg-name stack-instruction)
   (cadr stack-instruction))
 
@@ -315,7 +320,7 @@
                 action machine labels operations)))
         (lambda ()
           (action-proc)
-          (advance-pc pc)))
+          (advance-pc machine #f pc)))
       (error "Bad PERFORM instruction -- ASSEMBLE" inst))))
 (define (perform-action inst) (cdr inst))
 
@@ -358,8 +363,8 @@
 (define (operation-exp-operands operation-exp)
   (cdr operation-exp))
 
-(define (make-label-noop pc)
-  (lambda () (advance-pc pc)))
+(define (make-label-noop machine label pc)
+  (lambda () (advance-pc machine label pc)))
 
 (define (lookup-prim symbol operations)
   (let ((val (assoc symbol operations)))
