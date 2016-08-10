@@ -98,7 +98,11 @@
             'done
             (begin
               (if trace-inst
-                (printout (instruction-text (car insts))))
+                (begin
+                  (if last-label (printout last-label))
+                  (if (eq? 'label (car (instruction-text (car insts))))
+                    'ok
+                    (printout (instruction-text (car insts))))))
               ((instruction-execution-proc (car insts)))
               (execute)))))
       (define (exec-print-and-reset)
