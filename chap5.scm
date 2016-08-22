@@ -75,3 +75,42 @@
           (assign val (const 0))
           (goto (reg continue))
       count-done)))
+
+; 5.21 b
+(define (count-leaves tree)
+  (define (count-iter tree n)
+    (cond ((null? tree) n)
+          ((not (pair? tree)) (+ n 1))
+          (else (count-iter (cdr tree)
+                            (count-iter (car tree) n)))))
+  (count-iter tree 0))
+
+(define count-iter-tree-machine
+  (make-machine
+    (list (list '+ +) (list 'null? null?) (list 'pair? pair?) (list 'car car) (list 'cdr cdr))
+    '((assign n (const 0))
+      (assign continue (label count-leaves-done))
+      tree-loop
+        (test (op null?) (reg tree))
+        (branch (label null-tree))
+        (test (op pair?) (reg tree))
+        (branch (label start-iter))
+        (assign n (op +) (reg n) (const 1))
+        (goto (reg continue))
+      start-iter
+        (save continue)
+        (save tree)
+        (assign continue (label sum-cdr))
+        (assign tree (op car) (reg tree))
+        (goto (label tree-loop))
+      sum-cdr
+        (restore tree)
+        (assign continue (label after-pair))
+        (assign tree (op cdr) (reg tree))
+        (goto (label tree-loop))
+      after-pair
+        (restore continue)
+        (goto (reg continue))
+      null-tree
+        (goto (reg continue))
+      count-leaves-done)))
