@@ -114,3 +114,52 @@
       null-tree
         (goto (reg continue))
       count-leaves-done)))
+
+; 5.22
+(define (append x y)
+  (if (null? x)
+    y
+    (cons (car x) (append (cdr x) y))))
+
+(define append-machine
+  (make-machine
+    (list (list 'car car) (list 'cdr cdr) (list 'cons cons) (list 'null? null?))
+    '(
+       (assign continue (label append-done))
+      begin-loop
+       (test (op null?) (reg x))
+       (branch (label reached-null))
+       (assign val (op car) (reg x))
+       (assign x (op cdr) (reg x))
+       (save continue)
+       (save val)
+       (assign continue (label do-cons))
+       (goto (label begin-loop))
+      do-cons
+       (restore val)
+       (restore continue)
+       (assign y (op cons) (reg val) (reg y))
+       (goto (reg continue))
+      reached-null
+       (goto (reg continue))
+      append-done)))
+
+(define (append! x y)
+  (set-cdr! (last-pair x) y)
+  x)
+
+(define append!-machine
+  (make-machine
+    (list (list 'car car) (list 'cdr cdr) (list 'cons cons) (list 'set-cdr! set-cdr!) (list 'null? null?))
+    '(
+       (assign continue (label append-done))
+       (assign list-val (reg x))
+      begin-loop
+       (assign cdr-val (op cdr) (reg list-val))
+       (test (op null?) (reg cdr-val))
+       (branch (label reached-null))
+       (assign list-val (op cdr) (reg list-val))
+       (goto (label begin-loop))
+      reached-null
+       (perform (op set-cdr!) (reg list-val) (reg y))
+      append-done)))
